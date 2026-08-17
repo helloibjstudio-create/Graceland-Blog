@@ -125,6 +125,20 @@ table.admin-table tr:hover td { background: #FAFCFE; }
 .check { display: flex; align-items: center; gap: 10px; font-size: .86rem; font-weight: 600; }
 .check input { width: 17px; height: 17px; accent-color: var(--blue); }
 
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 44px; }
+.password-toggle {
+  position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+  display: grid; place-items: center;
+  width: 32px; height: 32px; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--muted); cursor: pointer;
+  transition: color .18s var(--ease), background .18s var(--ease);
+}
+.password-toggle:hover { color: var(--ink); background: rgba(0, 0, 0, .04); }
+.password-toggle:focus-visible {
+  outline: none; color: var(--blue); box-shadow: 0 0 0 3px rgba(42, 168, 232, .16);
+}
+
 .form-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   flex-wrap: wrap; border-top: 1px solid var(--line); padding: 18px 22px;
