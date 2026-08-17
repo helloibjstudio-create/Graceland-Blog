@@ -1,7 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { CONTACT, LOCATIONS } from "@/lib/site";
 import {
-  BrandMark,
   FacebookIcon,
   InstagramIcon,
   MailIcon,
@@ -17,11 +17,13 @@ export default function SiteFooter() {
         <div className="footer-grid">
           <div className="footer-brand">
             <Link className="brand" href="/">
-              <BrandMark dotFill="#06202E" />
-              <span className="brand-text">
-                <span className="brand-name">GRACELAND</span>
-                <span className="brand-sub">Psychiatry &amp; TMS Center</span>
-              </span>
+              <Image
+                src="/images/graceland-logo.svg"
+                alt="Graceland Psychiatry & TMS Center"
+                width={180}
+                height={38}
+                className="site-logo site-logo--accent"
+              />
             </Link>
             <p className="footer-about">
               Evidence-based treatment for depression, anxiety, ADHD, OCD, PTSD and

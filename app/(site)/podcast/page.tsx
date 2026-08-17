@@ -32,9 +32,12 @@ export default async function PodcastPage() {
       <div className="wrap-wide">
         <section className="pod-hero">
           <div className="pod-hero-copy">
-            <p className="pod-wordmark">
-              PSYCHIATRY <span>Perspectives</span>
-            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className="pod-wordmark-img"
+              src="/images/psychiatry perspectives.png"
+              alt="Psychiatry Perspectives"
+            />
             <h1>With Dr. Femi Popoola</h1>
             <p>
               Mental health from more than one angle. Evidence-based conversations shaped by
@@ -48,7 +51,8 @@ export default async function PodcastPage() {
             </a>
           </div>
           <Media
-            src="/images/dr-popoola-hero.png"
+            className="pod-hero-photo"
+            src="/images/Cover art 2.1.5.png"
             alt="Dr. Femi Popoola"
             gradient="linear-gradient(160deg,#0B6FA8,#04405F)"
           />

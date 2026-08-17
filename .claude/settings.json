@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(/public/images/podcast hero section.svg)",
+      "Read(/tsconfig.tsbuildinfo)",
+      "Read(/package-lock.json)",
+      "Read(/.next/**)",
+      "Read(/public/images/mona-sans/**)",
+      "Read(.DS_Store)"
+    ]
+  }
+}

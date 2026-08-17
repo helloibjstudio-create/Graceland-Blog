@@ -43,8 +43,25 @@ export function renderMarkdown(markdown: string): { html: string; toc: TocItem[]
   return { html: html as string, toc };
 }
 
-/** Rough reading time so editors do not have to guess. */
-export function estimateReadTime(markdown: string) {
-  const words = markdown.trim().split(/\s+/).filter(Boolean).length;
+/** Rough reading time so editors do not have to guess. Works with markdown or HTML. */
+export function estimateReadTime(content: string) {
+  const text = /<[a-z][\s\S]*>/i.test(content) ? content.replace(/<[^>]+>/g, " ") : content;
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / 220));
+}
+
+/**
+ * Processes HTML from the rich-text editor: injects id attributes into H2
+ * elements so the sidebar TOC scroll-spy still works.
+ */
+export function processHtml(html: string): { html: string; toc: TocItem[] } {
+  if (!html.trim()) return { html: "", toc: [] };
+  const toc: TocItem[] = [];
+  const processed = html.replace(/<h2([^>]*)>([\s\S]*?)<\/h2>/gi, (_match, attrs: string, inner: string) => {
+    const plain = inner.replace(/<[^>]+>/g, "").trim();
+    const id = plain.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    toc.push({ id, label: plain });
+    return `<h2${attrs} id="${id}">${inner}</h2>`;
+  });
+  return { html: processed, toc };
 }

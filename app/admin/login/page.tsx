@@ -1,5 +1,5 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
-import { BrandMark } from "@/components/icons";
 import LoginForm from "@/components/admin/login-form";
 import { getSession } from "@/lib/auth";
 
@@ -12,11 +12,14 @@ export default async function LoginPage() {
     <div className="login-wrap">
       <div className="login-card">
         <div className="brand">
-          <BrandMark />
-          <span className="brand-text">
-            <span className="brand-name">GRACELAND</span>
-            <span className="brand-sub">Content Studio</span>
-          </span>
+          <Image
+            src="/images/graceland-logo.svg"
+            alt="Graceland Psychiatry & TMS Center"
+            width={180}
+            height={38}
+            className="site-logo"
+          />
+          <span className="brand-sub" style={{ marginTop: 4 }}>Content Studio</span>
         </div>
 
         <h1>Sign in</h1>

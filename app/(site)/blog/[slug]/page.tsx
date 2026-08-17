@@ -10,7 +10,7 @@ import PostCard from "@/components/post-card";
 import ReadingProgress from "@/components/reading-progress";
 import { ArrowRight, PlayIcon } from "@/components/icons";
 import { ARTICLE_BODIES } from "@/content";
-import { renderMarkdown } from "@/lib/markdown";
+import { processHtml, renderMarkdown } from "@/lib/markdown";
 import { AUTHORS, formatLongDate } from "@/lib/posts";
 import { getPostBySlug, getPosts } from "@/lib/store";
 
@@ -50,11 +50,13 @@ export default async function ArticlePage({ params }: Params) {
 
   const author = AUTHORS[post.author];
   const coded = ARTICLE_BODIES[post.slug];
-  const markdown = post.body.trim() ? renderMarkdown(post.body) : null;
+  const isHtml = post.body.trim().startsWith("<");
+  const htmlResult = isHtml ? processHtml(post.body) : null;
+  const markdownResult = !isHtml && post.body.trim() ? renderMarkdown(post.body) : null;
 
-  // CMS markdown wins; otherwise fall back to the hand-coded article component.
-  const toc = markdown ? markdown.toc : (coded?.toc ?? []);
-  const CodedBody = !markdown ? coded?.Body : undefined;
+  const toc = htmlResult?.toc ?? markdownResult?.toc ?? coded?.toc ?? [];
+  const bodyHtml = htmlResult?.html ?? markdownResult?.html ?? null;
+  const CodedBody = !bodyHtml ? coded?.Body : undefined;
 
   const allPosts = await getPosts({ includeDrafts: isDraftMode });
   const related = allPosts.filter((p) => p.slug !== post.slug).slice(0, 3);
@@ -110,8 +112,8 @@ export default async function ArticlePage({ params }: Params) {
               <ArticleAside items={toc} />
 
               <article className="prose">
-                {markdown ? (
-                  <div dangerouslySetInnerHTML={{ __html: markdown.html }} />
+                {bodyHtml ? (
+                  <div dangerouslySetInnerHTML={{ __html: bodyHtml }} />
                 ) : CodedBody ? (
                   <CodedBody />
                 ) : (

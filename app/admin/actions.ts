@@ -197,3 +197,79 @@ export async function deleteEpisodeAction(formData: FormData) {
   revalidatePath("/admin");
   redirect("/admin/episodes?deleted=1");
 }
+
+/* ------------------------------------------------------------------- AI --- */
+
+type PostSuggestion = { topic: string; tag: string; variant: string; excerpt: string };
+type EpisodeSuggestion = { tag: string; variant: string };
+
+export async function suggestPostMetadata(
+  title: string,
+  bodyText: string,
+): Promise<PostSuggestion | { error: string }> {
+  await requireSession();
+  if (!process.env.ANTHROPIC_API_KEY) return { error: "ANTHROPIC_API_KEY is not configured." };
+  try {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const msg = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 256,
+      system:
+        "You are a metadata assistant for a psychiatry practice blog. Return ONLY valid JSON with no markdown fencing or extra text.",
+      messages: [
+        {
+          role: "user",
+          content: `Analyze this blog post and return metadata.
+
+Title: ${title}
+Content: ${bodyText.slice(0, 2000)}
+
+Return JSON:
+- "topic": one of: tms, depression, anxiety, child, wellness, spravato, adhd
+- "tag": short display label (e.g. "TMS Therapy", "Mental Wellness", "Anxiety", "ADHD", "Child Psychiatry")
+- "variant": one of: blue, green, violet, amber, rose
+- "excerpt": compelling 1-2 sentence summary under 160 characters`,
+        },
+      ],
+    });
+    const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "{}";
+    return JSON.parse(text) as PostSuggestion;
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+}
+
+export async function suggestEpisodeMetadata(
+  title: string,
+  summary: string,
+): Promise<EpisodeSuggestion | { error: string }> {
+  await requireSession();
+  if (!process.env.ANTHROPIC_API_KEY) return { error: "ANTHROPIC_API_KEY is not configured." };
+  try {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const msg = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 128,
+      system: "Return ONLY valid JSON with no markdown fencing.",
+      messages: [
+        {
+          role: "user",
+          content: `Analyze this podcast episode for a psychiatry practice.
+
+Title: ${title}
+Summary: ${summary}
+
+Return JSON:
+- "tag": short label like "Mental Health 101", "Patient Story", "TMS Therapy", "Depression", "Anxiety", "ADHD"
+- "variant": one of: blue, green, violet, amber, rose`,
+        },
+      ],
+    });
+    const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "{}";
+    return JSON.parse(text) as EpisodeSuggestion;
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+}

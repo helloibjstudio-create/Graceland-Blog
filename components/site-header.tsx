@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { BrandMark, ChevronDown } from "./icons";
+import { ChevronDown } from "./icons";
 
 const RESOURCES = [
   { href: "/blog", label: "Blog" },
@@ -70,11 +71,14 @@ export default function SiteHeader() {
       <div className="wrap-wide">
         <nav className="nav-shell" aria-label="Main navigation">
           <Link className="brand" href="/">
-            <BrandMark />
-            <span className="brand-text">
-              <span className="brand-name">GRACELAND</span>
-              <span className="brand-sub">Psychiatry &amp; TMS Center</span>
-            </span>
+            <Image
+              src="/images/graceland-logo.svg"
+              alt="Graceland Psychiatry & TMS Center"
+              width={180}
+              height={38}
+              className="site-logo"
+              priority
+            />
           </Link>
 
           <ul className="nav-links">

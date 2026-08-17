@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
-import { savePostAction, type ActionState } from "@/app/admin/actions";
+import { useActionState, useState, useTransition } from "react";
+import { savePostAction, suggestPostMetadata, type ActionState } from "@/app/admin/actions";
 import { TAG_VARIANTS, TOPIC_FILTERS, slugify } from "@/lib/posts";
 import type { Post } from "@/lib/types";
 import CopyButton from "./copy-button";
+import ImageUpload from "./image-upload";
+import RichTextEditor from "./rich-text-editor";
 
 const INITIAL: ActionState = {};
-
 const TOPICS = TOPIC_FILTERS.filter((t) => t.value !== "all");
 
 export default function PostEditor({
@@ -23,11 +24,35 @@ export default function PostEditor({
   hasCodedBody?: boolean;
 }) {
   const [state, action, pending] = useActionState(savePostAction, INITIAL);
+  const [aiPending, startAi] = useTransition();
+
   const [title, setTitle] = useState(post?.title ?? "");
   const [slug, setSlug] = useState(post?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(post?.slug));
+  const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
+  const [topic, setTopic] = useState(post?.topic ?? "wellness");
+  const [tag, setTag] = useState(post?.tag ?? "Mental Wellness");
+  const [variant, setVariant] = useState(post?.variant ?? "blue");
+  const [aiError, setAiError] = useState("");
 
   const effectiveSlug = slugTouched ? slug : slugify(title);
+
+  const handleSuggest = () => {
+    setAiError("");
+    const bodyEl = document.querySelector<HTMLInputElement>('input[name="body"]');
+    const bodyText = bodyEl?.value?.replace(/<[^>]+>/g, " ").trim() ?? "";
+    startAi(async () => {
+      const result = await suggestPostMetadata(title, bodyText);
+      if ("error" in result) {
+        setAiError(result.error);
+      } else {
+        if (result.topic) setTopic(result.topic);
+        if (result.tag) setTag(result.tag);
+        if (result.variant) setVariant(result.variant as typeof variant);
+        if (result.excerpt) setExcerpt(result.excerpt);
+      }
+    });
+  };
 
   return (
     <form action={action}>
@@ -39,13 +64,11 @@ export default function PostEditor({
           <p>
             {post
               ? `Last saved ${new Date(post.updatedAt).toLocaleString("en-US")}`
-              : "Drafts stay private until you publish — share the preview link for review."}
+              : "Drafts stay private until you publish."}
           </p>
         </div>
         <div className="admin-actions">
-          <Link className="btn btn-quiet btn-sm" href="/admin/posts">
-            Back to posts
-          </Link>
+          <Link className="btn btn-quiet btn-sm" href="/admin/posts">Back to posts</Link>
           <button className="btn btn-primary btn-sm" type="submit" disabled={pending}>
             {pending ? "Saving…" : "Save post"}
           </button>
@@ -56,9 +79,10 @@ export default function PostEditor({
       {state.error && <div className="alert alert-error">{state.error}</div>}
 
       <div className="editor-grid">
-        {/* ---------------- main column ---------------- */}
+        {/* ── main column ── */}
         <div className="panel">
           <div className="panel-body form-grid">
+
             <div className="field">
               <label htmlFor="title">Title</label>
               <input
@@ -76,10 +100,7 @@ export default function PostEditor({
                 id="slug"
                 name="slug"
                 value={effectiveSlug}
-                onChange={(e) => {
-                  setSlugTouched(true);
-                  setSlug(e.target.value);
-                }}
+                onChange={(e) => { setSlugTouched(true); setSlug(e.target.value); }}
               />
               <span className="hint">/blog/{effectiveSlug || "…"}</span>
             </div>
@@ -89,47 +110,62 @@ export default function PostEditor({
               <textarea
                 id="excerpt"
                 name="excerpt"
-                defaultValue={post?.excerpt ?? ""}
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
                 required
-                style={{ minHeight: 90 }}
+                style={{ minHeight: 80 }}
               />
               <span className="hint">Shown on cards, in search results and social shares.</span>
             </div>
 
             <div className="field">
-              <label htmlFor="body">Body (Markdown)</label>
-              <textarea id="body" name="body" className="code" defaultValue={post?.body ?? ""} />
+              <label>Body</label>
+              <RichTextEditor name="body" initialContent={post?.body ?? ""} />
               {hasCodedBody && !post?.body && (
                 <span className="hint">
-                  This post currently renders the hand-coded article component. Anything you type
-                  here replaces it.
+                  This post currently renders a hand-coded component. Anything typed here replaces it.
                 </span>
               )}
             </div>
 
-            <p className="markdown-help">
-              <code>## Heading</code> becomes a sidebar contents entry ·{" "}
-              <code>&gt; quote</code> renders as a pull quote · tables get the comparison styling ·{" "}
-              <code>- item</code> for bullet lists.
-            </p>
           </div>
 
           <div className="form-foot">
-            <span className="admin-sub">
-              {post ? `ID ${post.id}` : "A new ID is assigned on save."}
-            </span>
+            <span className="admin-sub">{post ? `ID ${post.id}` : "New ID on save."}</span>
             <button className="btn btn-primary" type="submit" disabled={pending}>
               {pending ? "Saving…" : "Save post"}
             </button>
           </div>
         </div>
 
-        {/* ---------------- sidebar ---------------- */}
+        {/* ── sidebar ── */}
         <div className="editor-side">
+
+          {/* AI suggest */}
           <div className="panel">
             <div className="panel-head">
-              <h2>Publishing</h2>
+              <h2>AI Assistant</h2>
             </div>
+            <div className="panel-body form-grid">
+              <p style={{ fontSize: ".85rem", margin: 0, color: "#666" }}>
+                Auto-fill tag, topic, colour and excerpt from the title and body.
+              </p>
+              {aiError && <span className="hint" style={{ color: "var(--rose,#e55)" }}>{aiError}</span>}
+              <button
+                type="button"
+                className="btn btn-dark btn-sm"
+                onClick={handleSuggest}
+                disabled={aiPending || !title}
+                style={{ width: "100%" }}
+              >
+                {aiPending ? "Thinking…" : "✦ Suggest metadata"}
+              </button>
+            </div>
+          </div>
+
+          {/* Publishing */}
+          <div className="panel">
+            <div className="panel-head"><h2>Publishing</h2></div>
             <div className="panel-body form-grid">
               <div className="field">
                 <label htmlFor="status">Status</label>
@@ -138,68 +174,51 @@ export default function PostEditor({
                   <option value="published">Published</option>
                 </select>
               </div>
-
               <div className="field">
                 <label htmlFor="date">Publish date</label>
-                <input
-                  id="date"
-                  name="date"
-                  type="date"
-                  defaultValue={post?.date ?? new Date().toISOString().slice(0, 10)}
-                />
+                <input id="date" name="date" type="date" defaultValue={post?.date ?? new Date().toISOString().slice(0, 10)} />
               </div>
-
               <label className="check">
                 <input type="checkbox" name="featured" defaultChecked={post?.featured} />
                 Feature at the top of /blog
               </label>
-
               {previewUrl && (
                 <div className="field">
                   <label>Shareable preview link</label>
                   <div className="preview-box">{previewUrl}</div>
                   <CopyButton value={previewUrl} />
-                  <span className="hint">
-                    Signed link — a reviewer can open the draft without signing in.
-                  </span>
+                  <span className="hint">Signed link — share without signing in.</span>
                 </div>
               )}
             </div>
           </div>
 
+          {/* Presentation */}
           <div className="panel">
-            <div className="panel-head">
-              <h2>Presentation</h2>
-            </div>
+            <div className="panel-head"><h2>Presentation</h2></div>
             <div className="panel-body form-grid">
               <div className="field">
                 <label htmlFor="tag">Tag label</label>
-                <input id="tag" name="tag" defaultValue={post?.tag ?? "Mental Wellness"} />
+                <input id="tag" name="tag" value={tag} onChange={(e) => setTag(e.target.value)} />
               </div>
-
               <div className="form-row">
                 <div className="field">
                   <label htmlFor="topic">Topic (filter)</label>
-                  <select id="topic" name="topic" defaultValue={post?.topic ?? "wellness"}>
+                  <select id="topic" name="topic" value={topic} onChange={(e) => setTopic(e.target.value)}>
                     {TOPICS.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
-                      </option>
+                      <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
                   </select>
                 </div>
                 <div className="field">
                   <label htmlFor="variant">Tag colour</label>
-                  <select id="variant" name="variant" defaultValue={post?.variant ?? "blue"}>
+                  <select id="variant" name="variant" value={variant} onChange={(e) => setVariant(e.target.value as typeof variant)}>
                     {TAG_VARIANTS.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
+                      <option key={v} value={v}>{v}</option>
                     ))}
                   </select>
                 </div>
               </div>
-
               <div className="form-row">
                 <div className="field">
                   <label htmlFor="author">Author</label>
@@ -210,41 +229,20 @@ export default function PostEditor({
                 </div>
                 <div className="field">
                   <label htmlFor="readTime">Read time (min)</label>
-                  <input
-                    id="readTime"
-                    name="readTime"
-                    type="number"
-                    min={1}
-                    max={60}
-                    defaultValue={post?.readTime ?? ""}
-                    placeholder="auto"
-                  />
+                  <input id="readTime" name="readTime" type="number" min={1} max={60} defaultValue={post?.readTime ?? ""} placeholder="auto" />
                 </div>
               </div>
 
-              <div className="field">
-                <label htmlFor="image">Cover image path</label>
-                <input
-                  id="image"
-                  name="image"
-                  defaultValue={post?.image ?? ""}
-                  placeholder="/images/my-post.jpg"
-                />
-                <span className="hint">Drop the file into /public/images.</span>
-              </div>
+              <ImageUpload name="image" defaultValue={post?.image ?? ""} label="Cover image" />
 
               <div className="field">
                 <label htmlFor="episodeUrl">Companion episode link</label>
-                <input
-                  id="episodeUrl"
-                  name="episodeUrl"
-                  defaultValue={post?.episodeUrl ?? ""}
-                  placeholder="/podcast"
-                />
-                <span className="hint">Adds the “Listen to the Episode” button.</span>
+                <input id="episodeUrl" name="episodeUrl" defaultValue={post?.episodeUrl ?? ""} placeholder="/podcast" />
+                <span className="hint">Adds the "Listen to the Episode" button.</span>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </form>

@@ -1,7 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { getEpisodes, getPosts } from "@/lib/store";
-import { BrandMark } from "@/components/icons";
 import AdminNav from "@/components/admin/admin-nav";
 import { logoutAction } from "../actions";
 
@@ -16,11 +16,14 @@ export default async function DashboardLayout({
     <div className="admin-shell">
       <aside className="admin-side">
         <Link className="brand" href="/admin">
-          <BrandMark dotFill="#06202E" />
-          <span className="brand-text">
-            <span className="brand-name">GRACELAND</span>
-            <span className="brand-sub">Content Studio</span>
-          </span>
+          <Image
+            src="/images/graceland-logo.svg"
+            alt="Graceland Psychiatry & TMS Center"
+            width={160}
+            height={34}
+            className="site-logo site-logo--white"
+          />
+          <span className="brand-sub" style={{ color: "rgba(255,255,255,.6)", fontSize: ".65rem", marginTop: 2 }}>Content Studio</span>
         </Link>
 
         <div>
