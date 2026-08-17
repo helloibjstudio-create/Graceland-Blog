@@ -10,6 +10,7 @@
     "admin:create": "node scripts/create-admin.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "marked": "^18.0.9",
     "next": "^16.3.1",
     "react": "^19.2.8",

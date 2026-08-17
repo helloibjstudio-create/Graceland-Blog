@@ -1,157 +1,250 @@
 import "server-only";
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { SEED_POSTS } from "./posts";
-import { SEED_EPISODES } from "./episodes";
-import type { ContentStore, Episode, Post } from "./types";
+import { supabase } from "./supabase";
+import type { Episode, Post } from "./types";
 
-/**
- * File-backed content store.
- *
- * Everything the CMS edits lives in one JSON document on disk. That keeps the
- * project dependency-free and easy to run anywhere with a writable filesystem
- * (a VPS, a container with a volume, `next start` on a droplet). If you deploy
- * to a read-only/serverless target, swap the two functions below — `readStore`
- * and `writeStore` — for your database of choice; nothing else changes.
- */
+/* --------------------------------------------------------- row mappers --- */
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DATA_FILE = path.join(DATA_DIR, "content.json");
+type PostRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  topic: string;
+  tag: string;
+  variant: string;
+  author: string;
+  date: string;
+  read_time: number;
+  image: string;
+  status: string;
+  featured: boolean;
+  episode_url: string | null;
+  updated_at: string;
+};
 
-let writeQueue: Promise<unknown> = Promise.resolve();
+type EpisodeRow = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  tag: string;
+  variant: string;
+  date: string;
+  image: string;
+  gradient: string;
+  youtube_url: string;
+  listen_url: string | null;
+  note: string | null;
+  article_href: string | null;
+  status: string;
+  updated_at: string;
+};
 
-function seed(): ContentStore {
-  return { posts: SEED_POSTS, episodes: SEED_EPISODES };
+function rowToPost(row: PostRow): Post {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    body: row.body,
+    topic: row.topic,
+    tag: row.tag,
+    variant: row.variant as Post["variant"],
+    author: row.author as Post["author"],
+    date: row.date,
+    readTime: row.read_time,
+    image: row.image,
+    status: row.status as Post["status"],
+    featured: row.featured,
+    episodeUrl: row.episode_url ?? undefined,
+    updatedAt: row.updated_at,
+  };
 }
 
-const READ_ONLY_CODES = new Set(["EROFS", "EACCES", "EPERM"]);
-
-export class ReadOnlyStoreError extends Error {
-  constructor() {
-    super(
-      "This deployment has a read-only filesystem, so content cannot be saved. " +
-        "Swap readStore/writeStore in lib/store.ts for a database (Vercel Blob, " +
-        "Postgres, KV), or host somewhere with a persistent disk.",
-    );
-    this.name = "ReadOnlyStoreError";
-  }
+function postToRow(post: Post, updatedAt: string): PostRow {
+  return {
+    id: post.id,
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    body: post.body,
+    topic: post.topic,
+    tag: post.tag,
+    variant: post.variant,
+    author: post.author,
+    date: post.date,
+    read_time: post.readTime,
+    image: post.image,
+    status: post.status,
+    featured: post.featured ?? false,
+    episode_url: post.episodeUrl ?? null,
+    updated_at: updatedAt,
+  };
 }
 
-export async function readStore(): Promise<ContentStore> {
-  try {
-    const raw = await fs.readFile(DATA_FILE, "utf8");
-    const parsed = JSON.parse(raw) as Partial<ContentStore>;
-    return {
-      posts: parsed.posts ?? [],
-      episodes: parsed.episodes ?? [],
-    };
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
-
-    // No file yet: seed it. On a read-only host (e.g. Vercel) the write fails —
-    // serve the seed from memory so pages still render instead of 500ing.
-    const initial = seed();
-    try {
-      await writeStore(initial);
-    } catch (writeErr) {
-      if (!(writeErr instanceof ReadOnlyStoreError)) throw writeErr;
-      console.warn("[store] read-only filesystem — serving seed content in memory.");
-    }
-    return initial;
-  }
+function rowToEpisode(row: EpisodeRow): Episode {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    summary: row.summary,
+    tag: row.tag,
+    variant: row.variant as Episode["variant"],
+    date: row.date,
+    image: row.image,
+    gradient: row.gradient,
+    youtubeUrl: row.youtube_url,
+    listenUrl: row.listen_url ?? undefined,
+    note: row.note ?? undefined,
+    articleHref: row.article_href ?? undefined,
+    status: row.status as Episode["status"],
+    updatedAt: row.updated_at,
+  };
 }
 
-export async function writeStore(store: ContentStore): Promise<void> {
-  // Serialize writes so two concurrent saves can't interleave.
-  writeQueue = writeQueue.then(async () => {
-    try {
-      await fs.mkdir(DATA_DIR, { recursive: true });
-      const tmp = `${DATA_FILE}.${process.pid}.tmp`;
-      await fs.writeFile(tmp, JSON.stringify(store, null, 2), "utf8");
-      await fs.rename(tmp, DATA_FILE); // atomic swap — no half-written file
-    } catch (err) {
-      if (READ_ONLY_CODES.has((err as NodeJS.ErrnoException).code ?? "")) {
-        throw new ReadOnlyStoreError();
-      }
-      throw err;
-    }
-  });
-  await writeQueue;
+function episodeToRow(ep: Episode, updatedAt: string): EpisodeRow {
+  return {
+    id: ep.id,
+    slug: ep.slug,
+    title: ep.title,
+    summary: ep.summary,
+    tag: ep.tag,
+    variant: ep.variant,
+    date: ep.date,
+    image: ep.image,
+    gradient: ep.gradient,
+    youtube_url: ep.youtubeUrl,
+    listen_url: ep.listenUrl ?? null,
+    note: ep.note ?? null,
+    article_href: ep.articleHref ?? null,
+    status: ep.status,
+    updated_at: updatedAt,
+  };
 }
 
 /* ---------------------------------------------------------------- posts --- */
 
-function byDateDesc<T extends { date: string }>(a: T, b: T) {
-  return b.date.localeCompare(a.date);
-}
-
 export async function getPosts({ includeDrafts = false } = {}): Promise<Post[]> {
-  const { posts } = await readStore();
-  return posts
-    .filter((p) => includeDrafts || p.status === "published")
-    .sort(byDateDesc);
+  let query = supabase.from("posts").select("*").order("date", { ascending: false });
+  if (!includeDrafts) query = query.eq("status", "published");
+  const { data, error } = await query;
+  if (error) throw new Error(`getPosts: ${error.message}`);
+  return (data as PostRow[]).map(rowToPost);
 }
 
-export async function getPostBySlug(slug: string, { includeDrafts = false } = {}) {
-  const { posts } = await readStore();
-  const post = posts.find((p) => p.slug === slug);
-  if (!post) return undefined;
+export async function getPostBySlug(
+  slug: string,
+  { includeDrafts = false } = {},
+): Promise<Post | undefined> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw new Error(`getPostBySlug: ${error.message}`);
+  if (!data) return undefined;
+  const post = rowToPost(data as PostRow);
   if (!includeDrafts && post.status !== "published") return undefined;
   return post;
 }
 
-export async function getPostById(id: string) {
-  const { posts } = await readStore();
-  return posts.find((p) => p.id === id);
+export async function getPostById(id: string): Promise<Post | undefined> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`getPostById: ${error.message}`);
+  return data ? rowToPost(data as PostRow) : undefined;
 }
 
 export async function upsertPost(post: Post): Promise<Post> {
-  const store = await readStore();
-  const index = store.posts.findIndex((p) => p.id === post.id);
-  const next = { ...post, updatedAt: new Date().toISOString() };
-  if (index >= 0) store.posts[index] = next;
-  else store.posts.unshift(next);
-  await writeStore(store);
-  return next;
+  const updatedAt = new Date().toISOString();
+  const row = postToRow(post, updatedAt);
+  const { data, error } = await supabase
+    .from("posts")
+    .upsert(row, { onConflict: "id" })
+    .select()
+    .single();
+  if (error) throw new Error(`upsertPost: ${error.message}`);
+  return rowToPost(data as PostRow);
 }
 
 export async function deletePost(id: string): Promise<void> {
-  const store = await readStore();
-  store.posts = store.posts.filter((p) => p.id !== id);
-  await writeStore(store);
+  const { error } = await supabase.from("posts").delete().eq("id", id);
+  if (error) throw new Error(`deletePost: ${error.message}`);
+}
+
+export async function postSlugExists(slug: string, excludeId?: string): Promise<boolean> {
+  let query = supabase
+    .from("posts")
+    .select("id", { count: "exact", head: true })
+    .eq("slug", slug);
+  if (excludeId) query = query.neq("id", excludeId);
+  const { count, error } = await query;
+  if (error) throw new Error(`postSlugExists: ${error.message}`);
+  return (count ?? 0) > 0;
+}
+
+export async function clearFeaturedPosts(excludeId: string): Promise<void> {
+  const { error } = await supabase
+    .from("posts")
+    .update({ featured: false, updated_at: new Date().toISOString() })
+    .neq("id", excludeId)
+    .eq("featured", true);
+  if (error) throw new Error(`clearFeaturedPosts: ${error.message}`);
 }
 
 /** Returns the featured post (falls back to the newest published one). */
-export async function getFeaturedPost(posts: Post[]) {
+export function getFeaturedPost(posts: Post[]): Post | undefined {
   return posts.find((p) => p.featured) ?? posts[0];
 }
 
 /* ------------------------------------------------------------- episodes --- */
 
 export async function getEpisodes({ includeDrafts = false } = {}): Promise<Episode[]> {
-  const { episodes } = await readStore();
-  return episodes
-    .filter((e) => includeDrafts || e.status === "published")
-    .sort(byDateDesc);
+  let query = supabase.from("episodes").select("*").order("date", { ascending: false });
+  if (!includeDrafts) query = query.eq("status", "published");
+  const { data, error } = await query;
+  if (error) throw new Error(`getEpisodes: ${error.message}`);
+  return (data as EpisodeRow[]).map(rowToEpisode);
 }
 
-export async function getEpisodeById(id: string) {
-  const { episodes } = await readStore();
-  return episodes.find((e) => e.id === id);
+export async function getEpisodeById(id: string): Promise<Episode | undefined> {
+  const { data, error } = await supabase
+    .from("episodes")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`getEpisodeById: ${error.message}`);
+  return data ? rowToEpisode(data as EpisodeRow) : undefined;
 }
 
 export async function upsertEpisode(episode: Episode): Promise<Episode> {
-  const store = await readStore();
-  const index = store.episodes.findIndex((e) => e.id === episode.id);
-  const next = { ...episode, updatedAt: new Date().toISOString() };
-  if (index >= 0) store.episodes[index] = next;
-  else store.episodes.unshift(next);
-  await writeStore(store);
-  return next;
+  const updatedAt = new Date().toISOString();
+  const row = episodeToRow(episode, updatedAt);
+  const { data, error } = await supabase
+    .from("episodes")
+    .upsert(row, { onConflict: "id" })
+    .select()
+    .single();
+  if (error) throw new Error(`upsertEpisode: ${error.message}`);
+  return rowToEpisode(data as EpisodeRow);
 }
 
 export async function deleteEpisode(id: string): Promise<void> {
-  const store = await readStore();
-  store.episodes = store.episodes.filter((e) => e.id !== id);
-  await writeStore(store);
+  const { error } = await supabase.from("episodes").delete().eq("id", id);
+  if (error) throw new Error(`deleteEpisode: ${error.message}`);
+}
+
+export async function episodeSlugExists(slug: string, excludeId?: string): Promise<boolean> {
+  let query = supabase
+    .from("episodes")
+    .select("id", { count: "exact", head: true })
+    .eq("slug", slug);
+  if (excludeId) query = query.neq("id", excludeId);
+  const { count, error } = await query;
+  if (error) throw new Error(`episodeSlugExists: ${error.message}`);
+  return (count ?? 0) > 0;
 }

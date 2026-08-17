@@ -6,15 +6,15 @@ import { checkCredentials, endSession, requireSession, startSession } from "@/li
 import { estimateReadTime } from "@/lib/markdown";
 import { slugify } from "@/lib/posts";
 import {
-  ReadOnlyStoreError,
+  clearFeaturedPosts,
   deleteEpisode,
   deletePost,
+  episodeSlugExists,
   getEpisodeById,
   getPostById,
-  readStore,
+  postSlugExists,
   upsertEpisode,
   upsertPost,
-  writeStore,
 } from "@/lib/store";
 import type { Episode, Post, PostStatus, TagVariant } from "@/lib/types";
 
@@ -65,9 +65,9 @@ export async function savePostAction(_prev: ActionState, formData: FormData): Pr
   if (!excerpt) return { error: "An excerpt is required — it is used on cards and in search results." };
 
   const slug = slugify(String(formData.get("slug") ?? "") || title);
-  const store = await readStore();
-  const clash = store.posts.find((p) => p.slug === slug && p.id !== id);
-  if (clash) return { error: `The slug “${slug}” is already used by another post.` };
+  if (await postSlugExists(slug, id || undefined)) {
+    return { error: `The slug "${slug}" is already used by another post.` };
+  }
 
   const readTimeInput = Number(formData.get("readTime"));
   const existing = id ? await getPostById(id) : undefined;
@@ -96,17 +96,8 @@ export async function savePostAction(_prev: ActionState, formData: FormData): Pr
     updatedAt: new Date().toISOString(),
   };
 
-  try {
-    // Only one post can hold the featured slot.
-    if (post.featured) {
-      store.posts = store.posts.map((p) => (p.id === post.id ? p : { ...p, featured: false }));
-      await writeStore(store);
-    }
-    await upsertPost(post);
-  } catch (err) {
-    if (err instanceof ReadOnlyStoreError) return { error: err.message };
-    throw err;
-  }
+  if (post.featured) await clearFeaturedPosts(post.id);
+  await upsertPost(post);
 
   revalidateBlog(post.slug);
   if (existing && existing.slug !== post.slug) revalidatePath(`/blog/${existing.slug}`);
@@ -153,9 +144,9 @@ export async function saveEpisodeAction(
   if (!title) return { error: "A title is required." };
 
   const slug = slugify(String(formData.get("slug") ?? "") || title);
-  const store = await readStore();
-  const clash = store.episodes.find((e) => e.slug === slug && e.id !== id);
-  if (clash) return { error: `The slug “${slug}” is already used by another episode.` };
+  if (await episodeSlugExists(slug, id || undefined)) {
+    return { error: `The slug "${slug}" is already used by another episode.` };
+  }
 
   const existing = id ? await getEpisodeById(id) : undefined;
 
@@ -180,13 +171,7 @@ export async function saveEpisodeAction(
     updatedAt: new Date().toISOString(),
   };
 
-  try {
-    await upsertEpisode(episode);
-  } catch (err) {
-    if (err instanceof ReadOnlyStoreError) return { error: err.message };
-    throw err;
-  }
-
+  await upsertEpisode(episode);
   revalidatePath("/podcast");
   redirect(`/admin/episodes/${episode.id}?saved=1`);
 }
