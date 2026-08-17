@@ -1,0 +1,214 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { checkCredentials, endSession, requireSession, startSession } from "@/lib/auth";
+import { estimateReadTime } from "@/lib/markdown";
+import { slugify } from "@/lib/posts";
+import {
+  ReadOnlyStoreError,
+  deleteEpisode,
+  deletePost,
+  getEpisodeById,
+  getPostById,
+  readStore,
+  upsertEpisode,
+  upsertPost,
+  writeStore,
+} from "@/lib/store";
+import type { Episode, Post, PostStatus, TagVariant } from "@/lib/types";
+
+export type ActionState = { error?: string; ok?: string };
+
+/* ----------------------------------------------------------------- auth --- */
+
+export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const email = String(formData.get("email") ?? "");
+  const password = String(formData.get("password") ?? "");
+
+  if (!email || !password) return { error: "Enter your email and password." };
+
+  try {
+    if (!checkCredentials(email, password)) {
+      return { error: "Those credentials do not match an admin account." };
+    }
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+
+  await startSession(email);
+  redirect("/admin");
+}
+
+export async function logoutAction() {
+  await endSession();
+  redirect("/admin/login");
+}
+
+/* ---------------------------------------------------------------- posts --- */
+
+function revalidateBlog(slug?: string) {
+  revalidatePath("/");
+  revalidatePath("/blog");
+  if (slug) revalidatePath(`/blog/${slug}`);
+}
+
+export async function savePostAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireSession();
+
+  const id = String(formData.get("id") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const body = String(formData.get("body") ?? "");
+  const excerpt = String(formData.get("excerpt") ?? "").trim();
+
+  if (!title) return { error: "A title is required." };
+  if (!excerpt) return { error: "An excerpt is required — it is used on cards and in search results." };
+
+  const slug = slugify(String(formData.get("slug") ?? "") || title);
+  const store = await readStore();
+  const clash = store.posts.find((p) => p.slug === slug && p.id !== id);
+  if (clash) return { error: `The slug “${slug}” is already used by another post.` };
+
+  const readTimeInput = Number(formData.get("readTime"));
+  const existing = id ? await getPostById(id) : undefined;
+
+  const post: Post = {
+    id: existing?.id ?? `post-${Date.now().toString(36)}`,
+    slug,
+    title,
+    excerpt,
+    body,
+    topic: String(formData.get("topic") ?? "wellness"),
+    tag: String(formData.get("tag") ?? "Mental Wellness").trim(),
+    variant: (String(formData.get("variant") ?? "blue") as TagVariant) || "blue",
+    author: formData.get("author") === "team" ? "team" : "popoola",
+    date: String(formData.get("date") ?? new Date().toISOString().slice(0, 10)),
+    readTime:
+      Number.isFinite(readTimeInput) && readTimeInput > 0
+        ? Math.round(readTimeInput)
+        : estimateReadTime(body || excerpt),
+    image: String(formData.get("image") ?? "").trim(),
+    status: (String(formData.get("status") ?? "draft") as PostStatus) === "published"
+      ? "published"
+      : "draft",
+    featured: formData.get("featured") === "on",
+    episodeUrl: String(formData.get("episodeUrl") ?? "").trim() || undefined,
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    // Only one post can hold the featured slot.
+    if (post.featured) {
+      store.posts = store.posts.map((p) => (p.id === post.id ? p : { ...p, featured: false }));
+      await writeStore(store);
+    }
+    await upsertPost(post);
+  } catch (err) {
+    if (err instanceof ReadOnlyStoreError) return { error: err.message };
+    throw err;
+  }
+
+  revalidateBlog(post.slug);
+  if (existing && existing.slug !== post.slug) revalidatePath(`/blog/${existing.slug}`);
+
+  redirect(`/admin/posts/${post.id}?saved=1`);
+}
+
+export async function togglePostStatusAction(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") ?? "");
+  const post = await getPostById(id);
+  if (!post) return;
+  const next: Post = {
+    ...post,
+    status: post.status === "published" ? "draft" : "published",
+  };
+  await upsertPost(next);
+  revalidateBlog(post.slug);
+  revalidatePath("/admin");
+  revalidatePath("/admin/posts");
+}
+
+export async function deletePostAction(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") ?? "");
+  const post = await getPostById(id);
+  await deletePost(id);
+  revalidateBlog(post?.slug);
+  revalidatePath("/admin");
+  revalidatePath("/admin/posts");
+  redirect("/admin/posts?deleted=1");
+}
+
+/* ------------------------------------------------------------- episodes --- */
+
+export async function saveEpisodeAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireSession();
+
+  const id = String(formData.get("id") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) return { error: "A title is required." };
+
+  const slug = slugify(String(formData.get("slug") ?? "") || title);
+  const store = await readStore();
+  const clash = store.episodes.find((e) => e.slug === slug && e.id !== id);
+  if (clash) return { error: `The slug “${slug}” is already used by another episode.` };
+
+  const existing = id ? await getEpisodeById(id) : undefined;
+
+  const episode: Episode = {
+    id: existing?.id ?? `ep-${Date.now().toString(36)}`,
+    slug,
+    title,
+    summary: String(formData.get("summary") ?? "").trim(),
+    tag: String(formData.get("tag") ?? "Mental Health 101").trim(),
+    variant: (String(formData.get("variant") ?? "blue") as TagVariant) || "blue",
+    date: String(formData.get("date") ?? new Date().toISOString().slice(0, 10)),
+    image: String(formData.get("image") ?? "").trim(),
+    gradient:
+      String(formData.get("gradient") ?? "").trim() || "linear-gradient(150deg,#123B52,#1D6E96)",
+    youtubeUrl: String(formData.get("youtubeUrl") ?? "").trim(),
+    listenUrl: String(formData.get("listenUrl") ?? "").trim() || undefined,
+    note: String(formData.get("note") ?? "").trim() || undefined,
+    articleHref: String(formData.get("articleHref") ?? "").trim() || undefined,
+    status: (String(formData.get("status") ?? "draft") as PostStatus) === "published"
+      ? "published"
+      : "draft",
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    await upsertEpisode(episode);
+  } catch (err) {
+    if (err instanceof ReadOnlyStoreError) return { error: err.message };
+    throw err;
+  }
+
+  revalidatePath("/podcast");
+  redirect(`/admin/episodes/${episode.id}?saved=1`);
+}
+
+export async function toggleEpisodeStatusAction(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") ?? "");
+  const episode = await getEpisodeById(id);
+  if (!episode) return;
+  await upsertEpisode({
+    ...episode,
+    status: episode.status === "published" ? "draft" : "published",
+  });
+  revalidatePath("/podcast");
+  revalidatePath("/admin/episodes");
+  revalidatePath("/admin");
+}
+
+export async function deleteEpisodeAction(formData: FormData) {
+  await requireSession();
+  await deleteEpisode(String(formData.get("id") ?? ""));
+  revalidatePath("/podcast");
+  revalidatePath("/admin");
+  redirect("/admin/episodes?deleted=1");
+}

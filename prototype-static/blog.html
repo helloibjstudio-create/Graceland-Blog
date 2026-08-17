@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog | Graceland Psychiatry &amp; TMS Center</title>
+<meta name="description" content="Expert-backed articles from Graceland Psychiatry &amp; TMS Center on depression, anxiety, ADHD, OCD, PTSD and treatment-resistant conditions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <div class="wrap-wide">
+    <nav class="nav-shell" aria-label="Main navigation">
+      <a class="brand" href="index.html">
+        <svg class="brand-mark" viewBox="0 0 34 40" aria-hidden="true">
+          <path d="M17 0C8.7 0 2 6.7 2 15c0 10.5 13 24 14.2 25a1.2 1.2 0 0 0 1.6 0C19 39 32 25.5 32 15 32 6.7 25.3 0 17 0Z" fill="#2AA8E8"/>
+          <circle cx="17" cy="15" r="6.4" fill="#fff"/>
+          <path d="M26 3h5M28.5 .5v5" stroke="#2AA8E8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="brand-text">
+          <span class="brand-name">GRACELAND</span>
+          <span class="brand-sub">Psychiatry &amp; TMS Center</span>
+        </span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="our-team.html">Our Team</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li class="nav-item-has-menu">
+          <button class="nav-toggle-link" aria-expanded="false" aria-haspopup="true" aria-controls="resources-menu">
+            Resources
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" aria-hidden="true">
+              <path d="M1 1.5 5.5 6 10 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="dropdown" id="resources-menu">
+            <p class="dropdown-label">Learn &amp; Explore</p>
+            <ul class="dropdown-list">
+              <li><a href="blog.html" aria-current="page">Blog</a></li>
+              <li><a href="podcast.html">Podcast</a></li>
+            </ul>
+          </div>
+        </li>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+
+      <a class="nav-cta" href="https://patientportal.example.com">Patient Portal</a>
+      <button class="burger" aria-label="Toggle menu" aria-expanded="false"><span></span></button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero-bg ph"><img src="assets/images/hero-brain.jpg" alt=""></div>
+    <div class="wrap">
+      <h1>Blogs</h1>
+      <p class="hero-lede">
+        Explore expert-backed articles from Graceland Psychiatry &amp; TMS Center designed to help you
+        understand your mind, discover effective treatments, and make confident decisions about your mental health.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ FILTERS ============ -->
+  <div class="wrap">
+    <div class="filters">
+      <div class="filter" data-filter="date">
+        <button class="filter-btn" aria-expanded="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="filter-value">Posted at</span>
+          <svg width="10" height="6" viewBox="0 0 11 7" fill="none" aria-hidden="true">
+            <path d="M1 1.5 5.5 6 10 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="filter-menu" role="group" aria-label="Filter by date">
+          <button data-value="all" aria-pressed="true">Any time</button>
+          <button data-value="30">Last 30 days</button>
+          <button data-value="90">Last 3 months</button>
+          <button data-value="365">Last year</button>
+        </div>
+      </div>
+
+      <div class="filter" data-filter="topic">
+        <button class="filter-btn" aria-expanded="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 5h16M4 12h16M4 19h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="filter-value">Content type</span>
+          <svg width="10" height="6" viewBox="0 0 11 7" fill="none" aria-hidden="true">
+            <path d="M1 1.5 5.5 6 10 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="filter-menu" role="group" aria-label="Filter by content type">
+          <button data-value="all" aria-pressed="true">All topics</button>
+          <button data-value="tms">TMS Therapy</button>
+          <button data-value="depression">Depression</button>
+          <button data-value="anxiety">Anxiety</button>
+          <button data-value="child">Child Psychiatry</button>
+          <button data-value="wellness">Mental Wellness</button>
+          <button data-value="spravato">Spravato</button>
+          <button data-value="adhd">ADHD</button>
+        </div>
+      </div>
+
+      <div class="filter" data-filter="author">
+        <button class="filter-btn" aria-expanded="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/>
+            <path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="filter-value">Author</span>
+          <svg width="10" height="6" viewBox="0 0 11 7" fill="none" aria-hidden="true">
+            <path d="M1 1.5 5.5 6 10 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="filter-menu" role="group" aria-label="Filter by author">
+          <button data-value="all" aria-pressed="true">All authors</button>
+          <button data-value="popoola">Dr. Femi Popoola</button>
+          <button data-value="team">Graceland Psychiatry</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FEATURED ============ -->
+  <section class="wrap">
+    <div class="feature-row">
+      <article class="feature-card">
+        <div class="feature-pills">
+          <span class="tag tag-new">NEW</span>
+          <span class="tag tag-glass">TMS Therapy</span>
+        </div>
+        <h2><a href="blog-tms-therapy.html">TMS Therapy: The Drug-Free Depression Treatment Changing Lives in San Antonio</a></h2>
+        <p>
+          Transcranial Magnetic Stimulation is transforming how we treat major depressive disorder.
+          Dr. Femi Popoola explains who it's right for, what to expect during treatment, and the
+          neuroscience behind why it works when medications have failed.
+        </p>
+        <div class="feature-foot">
+          <div class="byline">
+            <span class="avatar">FP</span>
+            <span>
+              <span class="byline-name">Dr. Femi Popoola</span>
+              <span class="byline-meta">Jul 10, 2026 · 8 min</span>
+            </span>
+          </div>
+          <div class="feature-actions">
+            <a class="btn btn-primary btn-sm" href="podcast.html">
+              <svg width="11" height="12" viewBox="0 0 11 12" fill="currentColor" aria-hidden="true"><path d="M0 0v12l11-6z"/></svg>
+              Listen to the Episode
+            </a>
+            <a class="link-arrow" href="blog-tms-therapy.html">Read Article
+              <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
+                <path d="M1 5h11M8.5 1.5 12 5l-3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </article>
+
+      <div class="feature-side">
+        <a class="mini-card" href="#">
+          <span class="ph"><img src="assets/images/spravato.jpg" alt=""></span>
+          <div class="mini-body">
+            <span class="tag tag-green">Spravato</span>
+            <h3>Spravato: The FDA-Approved Nasal Spray That Can Lift Depression in Hours</h3>
+            <div class="meta">
+              <span class="meta-item">6 min</span><span>·</span><span>Jul 7, 2026</span>
+            </div>
+          </div>
+        </a>
+        <a class="mini-card" href="#">
+          <span class="ph"><img src="assets/images/adhd-women.jpg" alt=""></span>
+          <div class="mini-body">
+            <span class="tag tag-violet">ADHD</span>
+            <h3>ADHD in Women and Girls: Why It Goes Undiagnosed for Decades</h3>
+            <div class="meta">
+              <span class="meta-item">7 min</span><span>·</span><span>Jul 3, 2026</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LATEST ARTICLES ============ -->
+  <section class="wrap section">
+    <div class="section-title" style="margin-bottom:26px">
+      <h2>Latest Articles</h2>
+      <span class="count-pill" data-post-count>9 articles</span>
+    </div>
+
+    <div class="card-grid">
+      <article class="post-card" data-post data-topic="wellness" data-author="team" data-date="30">
+        <span class="ph"><img src="assets/images/first-appointment.jpg" alt=""></span>
+        <div class="post-body">
+          <span class="tag"><span>Mental Wellness</span></span>
+          <h3><a href="#">What to Expect at Your First Psychiatry Appointment</a></h3>
+          <p class="post-excerpt">Seeing a psychiatrist for the first time can feel overwhelming. We walk you through exactly what happens, what to bring, and the questions worth asking.</p>
+          <div class="post-foot">
+            <div class="byline">
+              <span class="avatar">GP</span>
+              <span>
+                <span class="byline-name">Graceland Psychiatry</span>
+                <span class="byline-meta">Jun 28, 2026</span>
+              </span>
+            </div>
+            <span class="byline-meta">6 min</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="post-card" data-post data-topic="wellness" data-author="popoola" data-date="30">
+        <span class="ph"><img src="assets/images/sleep.jpg" alt=""></span>
+        <div class="post-body">
+          <span class="tag">Mental Wellness</span>
+          <h3><a href="#">The Sleep and Mental Health Connection: What Your Brain Does While You Rest</a></h3>
+          <p class="post-excerpt">Poor sleep does not just leave you fatigued. It actively reshapes emotional regulation and raises your risk for mood and anxiety disorders.</p>
+          <div class="post-foot">
+            <div class="byline">
+              <span class="avatar">FP</span>
+              <span>
+                <span class="byline-name">Dr. Femi Popoola</span>
+                <span class="byline-meta">Jun 22, 2026</span>
+              </span>
+            </div>
+            <span class="byline-meta">9 min</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="post-card" data-post data-topic="anxiety" data-author="popoola" data-date="90">
+        <span class="ph"><img src="assets/images/anxiety.jpg" alt=""></span>
+        <div class="post-body">
+          <span class="tag tag-amber">Anxiety</span>
+          <h3><a href="#">When Anxiety Goes Beyond Worry: Recognizing Generalized Anxiety Disorder</a></h3>
+          <p class="post-excerpt">Almost everyone worries sometimes. But when anxiety becomes relentless and physically exhausting, it is time to look at what is really going on.</p>
+          <div class="post-foot">
+            <div class="byline">
+              <span class="avatar">FP</span>
+              <span>
+                <span class="byline-name">Dr. Femi Popoola</span>
+                <span class="byline-meta">Jun 16, 2026</span>
+              </span>
+            </div>
+            <span class="byline-meta">7 min</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Newsletter band -->
+    <div class="newsletter">
+      <div>
+        <span class="tag">✉ Newsletter</span>
+        <h3>Stay ahead in mental health.</h3>
+        <p>New articles, research updates, and clinical insights delivered to your inbox — no spam, unsubscribe anytime.</p>
+      </div>
+      <form class="subscribe" data-subscribe>
+        <label class="sr-only" for="nl-blog">Email address</label>
+        <input id="nl-blog" type="email" placeholder="your@email.com" required>
+        <button class="btn btn-primary" type="submit">Subscribe</button>
+        <p class="form-note"></p>
+      </form>
+    </div>
+
+    <div class="card-grid">
+      <article class="post-card" data-post data-topic="child" data-author="popoola" data-date="90">
+        <span class="ph"><img src="assets/images/resilient-kids.jpg" alt=""></span>
+        <div class="post-body">
+          <span class="tag">Child Psychiatry</span>
+          <h3><a href="#">Raising Emotionally Resilient Kids: A Child Psychiatrist's Practical Guide</a></h3>
+          <p class="post-excerpt">Emotional resilience is a skill, not a trait children are born with. Dr. Popoola shares research-backed strategies families can start using today.</p>
+          <div class="post-foot">
+            <div class="byline">
+              <span class="avatar">FP</span>
+              <span>
+                <span class="byline-name">Dr. Femi Popoola</span>
+                <span class="byline-meta">Jun 4, 2026</span>
+              </span>
+            </div>
+            <span class="byline-meta">10 min</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="post-card" data-post data-topic="depression" data-author="popoola" data-date="90">
+        <span class="ph"><img src="assets/images/trd.jpg" alt=""></span>
+        <div class="post-body">
+          <span class="tag tag-rose">Depression</span>
+          <h3><a href="#">Treatment-Resistant Depression: Why Your Medication Stopped Working</a></h3>
+          <p class="post-excerpt">Up to a third of people with depression do not respond adequately to standard antidepressants. Dr. Popoola explains what comes next.</p>
+          <div class="post-foot">
+            <div class="byline">
+              <span class="avatar">FP</span>
+              <span>
+                <span class="byline-name">Dr. Femi Popoola</span>
+                <span class="byline-meta">May 30, 2026</span>
+              </span>
+            </div>
+            <span class="byline-meta">8 min</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="post-card" data-post data-topic="child" data-author="popoola" data-date="90">
+        <span class="ph"><img src="assets/images/talking-child.jpg" alt=""></span>
+        <div class="post-body">
+          <span class="tag">Child Psychiatry</span>
+          <h3><a href="#">Talking to Your Child About Mental Health: An Age-by-Age Guide</a></h3>
+          <p class="post-excerpt">When and how do you discuss depression, anxiety, or therapy with your kids? A child psychiatrist gives parents the words to use.</p>
+          <div class="post-foot">
+            <div class="byline">
+              <span class="avatar">FP</span>
+              <span>
+                <span class="byline-name">Dr. Femi Popoola</span>
+                <span class="byline-meta">May 20, 2026</span>
+              </span>
+            </div>
+            <span class="byline-meta">8 min</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <p data-empty-state hidden style="text-align:center;padding:40px 0;color:var(--muted)">
+      No articles match those filters yet — try widening your selection.
+    </p>
+
+    <!-- We Discuss -->
+    <div class="section-tight">
+      <h2 style="font-size:1.35rem">We Discuss</h2>
+      <div class="topics">
+        <a class="topic" href="#">Anxiety</a><a class="topic" href="#">Depression</a>
+        <a class="topic" href="#">ADHD</a><a class="topic" href="#">Child Psychiatry</a>
+        <a class="topic" href="#">Bipolar Disorder</a><a class="topic" href="#">PTSD &amp; Trauma</a>
+        <a class="topic" href="#">OCD</a><a class="topic" href="#">Addiction Recovery</a>
+        <a class="topic" href="#">TMS Therapy</a><a class="topic" href="#">Spravato</a>
+        <a class="topic" href="#">Medication Management</a><a class="topic" href="#">Eating Disorders</a>
+        <a class="topic" href="#">Schizophrenia</a><a class="topic" href="#">Perinatal Psychiatry</a>
+        <a class="topic" href="#">Talk Therapy</a><a class="topic" href="#">Mental Wellness</a>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav class="pagination" aria-label="Pagination">
+      <a class="page-nav" href="#">
+        <svg width="15" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
+          <path d="M13 5H2M5.5 1.5 2 5l3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg> Previous
+      </a>
+      <div class="pages">
+        <span class="is-current" aria-current="page">1</span>
+        <a href="#">2</a><a href="#">3</a><span>…</span>
+        <a href="#">8</a><a href="#">9</a><a href="#">10</a>
+      </div>
+      <a class="page-nav" href="#">Next
+        <svg width="15" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
+          <path d="M1 5h11M8.5 1.5 12 5l-3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </nav>
+  </section>
+
+  <!-- ============ CTA ============ -->
+  <section class="cta-band">
+    <div class="wrap">
+      <span class="eyebrow">Take the first step</span>
+      <h2>Ready to take the first step towards improved mental well-being?</h2>
+      <p>We're here to help you on your journey.</p>
+      <a class="btn btn-primary" href="contact.html">Book an Appointment
+        <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
+          <path d="M1 5h11M8.5 1.5 12 5l-3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <p class="cta-note">Or call/text us directly at <strong>210-868-5801</strong></p>
+    </div>
+  </section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <svg class="brand-mark" viewBox="0 0 34 40" aria-hidden="true">
+            <path d="M17 0C8.7 0 2 6.7 2 15c0 10.5 13 24 14.2 25a1.2 1.2 0 0 0 1.6 0C19 39 32 25.5 32 15 32 6.7 25.3 0 17 0Z" fill="#2AA8E8"/>
+            <circle cx="17" cy="15" r="6.4" fill="#06202E"/>
+            <path d="M26 3h5M28.5 .5v5" stroke="#2AA8E8" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="brand-text">
+            <span class="brand-name">GRACELAND</span>
+            <span class="brand-sub">Psychiatry &amp; TMS Center</span>
+          </span>
+        </a>
+        <p class="footer-about">Evidence-based treatment for depression, anxiety, ADHD, OCD, PTSD and treatment-resistant conditions.</p>
+        <div class="socials">
+          <a href="#" aria-label="Instagram"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg></a>
+          <a href="#" aria-label="YouTube"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="4" stroke="currentColor" stroke-width="2"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg></a>
+          <a href="#" aria-label="Facebook"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3h-3.1V8.2c0-.9.2-1.4 1.5-1.4h1.7V4.1c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.2V10H7.6v3h2.7v8z"/></svg></a>
+        </div>
+      </div>
+
+      <div>
+        <h4>Contact</h4>
+        <ul class="footer-list">
+          <li class="footer-line">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            <span>Call/Text: <a href="tel:2108685801">210-868-5801</a><br>210-868-5801 ext. 169<br>Fax: 726-201-1558</span>
+          </li>
+          <li class="footer-line">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="2"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="2"/></svg>
+            <a href="mailto:contact@gracelandpsychiatry.com">contact@gracelandpsychiatry.com</a>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Locations</h4>
+        <ul class="footer-list">
+          <li class="footer-line"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="2"/></svg><span>11212 State Hwy 151, Plaza 2, Suite 129<br>San Antonio, TX 78251</span></li>
+          <li class="footer-line"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="2"/></svg><span>2411 NE Interstate 410 Loop, Suite 124<br>San Antonio, TX 78217</span></li>
+          <li class="footer-line"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="2"/></svg><span>790 Generations Drive, Suite 210<br>New Braunfels, TX 78130</span></li>
+          <li class="footer-line"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="2"/></svg><span>619 N Providence Road<br>Columbia, MO 65203</span></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Quick Links</h4>
+        <ul class="footer-list">
+          <li><a href="services.html">Services</a></li>
+          <li><a href="our-team.html">Our Team</a></li>
+          <li><a href="blog.html">Blog</a></li>
+          <li><a href="podcast.html">Podcast</a></li>
+          <li><a href="privacy.html">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© <span data-year>2026</span> Graceland Psychiatry. All Rights Reserved.</span>
+      <a href="privacy.html">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>
