@@ -213,10 +213,10 @@ export default async function PodcastPage() {
               psychiatrist. He is the founder of Graceland Psychiatry and TMS Center, with clinics
               in San Antonio, Texas; New Braunfels, Texas; and Columbia, Missouri. He earned his
               medical degree from the University of Ilorin in Nigeria and completed psychiatry
-              residency at the University of Missouri (Mizzou). He served four years on active
-              duty in the United States Navy, including service aboard the USS Gravely. He is also
-              the founder of Mastermind Recovery, pastor of New Testament Christian Mission San
-              Antonio, and host of the Mental Health Insights podcast.
+              residency and fellowship at the University of Missouri (Mizzou). He served four
+              years on active duty in the United States Navy, including service aboard the USS
+              Gravely. He is also the founder of Mastermind Recovery, pastor of New Testament
+              Christian Mission San Antonio, and host of the Psychiatry Perspectives podcast.
             </p>
           </div>
         </div>
