@@ -4,13 +4,17 @@ import { formatDate } from "@/lib/posts";
 import StatusPill from "@/components/admin/status-pill";
 import RowActions from "@/components/admin/row-actions";
 import PerformanceDashboard from "@/components/admin/performance-dashboard";
-import { buildOverview } from "@/lib/analytics";
+import { buildOverview, resolveRange } from "@/lib/analytics";
 
 // Fresh numbers on every visit — no caching so it feels real-time.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function AdminOverview() {
+export default async function AdminOverview({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>;
+}) {
   const posts = await getPosts({ includeDrafts: true });
   const episodes = await getEpisodes({ includeDrafts: true });
 
@@ -18,7 +22,8 @@ export default async function AdminOverview() {
   const lastUpdated = [...posts, ...episodes].sort((a, b) =>
     b.updatedAt.localeCompare(a.updatedAt),
   )[0];
-  const overview = await buildOverview(posts, episodes);
+  const range = resolveRange((await searchParams).range);
+  const overview = await buildOverview(posts, episodes, range);
 
   return (
     <>

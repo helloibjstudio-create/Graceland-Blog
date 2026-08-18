@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { ItemMetric, Overview } from "@/lib/analytics";
+import type { ItemMetric, Overview, RangeKey } from "@/lib/analytics";
+
+const RANGE_BUTTONS: { key: RangeKey; label: string }[] = [
+  { key: "7d",  label: "7 days" },
+  { key: "30d", label: "30 days" },
+  { key: "90d", label: "3 months" },
+  { key: "1y",  label: "1 year" },
+];
 
 /** Counts up to `target` over ~900ms — makes the top numbers feel alive. */
 function useCountUp(target: number, start = 0, ms = 900) {
@@ -32,12 +39,18 @@ function fmt(n: number) {
   return n.toLocaleString("en-US");
 }
 
-function AreaChart({ points }: { points: { label: string; value: number }[] }) {
+function AreaChart({
+  points,
+  rangeLabel,
+}: {
+  points: { label: string; value: number }[];
+  rangeLabel: string;
+}) {
   const w = 720, h = 220, pad = { l: 34, r: 12, t: 14, b: 28 };
   const iw = w - pad.l - pad.r;
   const ih = h - pad.t - pad.b;
   const max = Math.max(...points.map((p) => p.value), 1);
-  const step = iw / (points.length - 1);
+  const step = iw / Math.max(1, points.length - 1);
   const x = (i: number) => pad.l + i * step;
   const y = (v: number) => pad.t + ih - (v / max) * ih;
 
@@ -46,9 +59,11 @@ function AreaChart({ points }: { points: { label: string; value: number }[] }) {
 
   const [hover, setHover] = useState<number | null>(null);
   const yTicks = 4;
+  // Keep the x-axis readable for both 7-point and 30-point series.
+  const labelStride = Math.max(1, Math.ceil(points.length / 8));
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="perf-chart" role="img" aria-label="Views over the last 14 days">
+    <svg viewBox={`0 0 ${w} ${h}`} className="perf-chart" role="img" aria-label={`Views over the ${rangeLabel}`}>
       <defs>
         <linearGradient id="perf-area" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#2AA8E8" stopOpacity=".38" />
@@ -76,7 +91,7 @@ function AreaChart({ points }: { points: { label: string; value: number }[] }) {
         <g key={i} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
           <rect x={x(i) - step / 2} y={pad.t} width={step} height={ih} fill="transparent" />
           <circle cx={x(i)} cy={y(p.value)} r={hover === i ? 5 : 0} fill="#fff" stroke="#2AA8E8" strokeWidth="2.5" />
-          {i % 2 === 0 && (
+          {i % labelStride === 0 && (
             <text x={x(i)} y={h - 8} textAnchor="middle" fontSize="10" fill="#8899A6">
               {p.label}
             </text>
@@ -185,8 +200,7 @@ function TopList({ title, items, base }: { title: string; items: ItemMetric[]; b
 export default function PerformanceDashboard({ data }: { data: Overview }) {
   const router = useRouter();
   const total = useCountUp(data.totalViews);
-  const week = useCountUp(data.weekViews);
-  const [range, setRange] = useState<"7d" | "14d">("14d");
+  const uniques = useCountUp(data.uniqueVisitors);
 
   // Poll the server every 30s so views refresh without a manual reload.
   useEffect(() => {
@@ -198,11 +212,8 @@ export default function PerformanceDashboard({ data }: { data: Overview }) {
       window.removeEventListener("focus", onFocus);
     };
   }, [router]);
-  const points = useMemo(
-    () => (range === "7d" ? data.daily.slice(-7) : data.daily),
-    [data.daily, range],
-  );
-  const up = data.weekChangePct >= 0;
+
+  const up = data.rangeChangePct >= 0;
 
   return (
     <div className="perf-wrap">
@@ -212,44 +223,35 @@ export default function PerformanceDashboard({ data }: { data: Overview }) {
           <h2>How your content is doing</h2>
         </div>
         <div className="perf-range">
-          <button
-            type="button"
-            className={range === "7d" ? "is-active" : ""}
-            onClick={() => setRange("7d")}
-          >
-            Last 7 days
-          </button>
-          <button
-            type="button"
-            className={range === "14d" ? "is-active" : ""}
-            onClick={() => setRange("14d")}
-          >
-            Last 14 days
-          </button>
+          {RANGE_BUTTONS.map((b) => (
+            <Link
+              key={b.key}
+              href={`/admin?range=${b.key}`}
+              scroll={false}
+              className={data.range === b.key ? "is-active" : ""}
+            >
+              {b.label}
+            </Link>
+          ))}
         </div>
       </div>
 
       <div className="perf-stats">
         <div className="perf-stat perf-stat--hero">
-          <span>Total views</span>
+          <span>Total views · {data.rangeLabel}</span>
           <b>{fmt(total)}</b>
           <div className={`perf-delta ${up ? "up" : "down"}`}>
             <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
               <path d={up ? "M5 1l4 5H1z" : "M5 9L1 4h8z"} fill="currentColor" />
             </svg>
             {up ? "+" : ""}
-            {data.weekChangePct}% vs prior week
+            {data.rangeChangePct}% vs prior period
           </div>
         </div>
         <div className="perf-stat">
-          <span>This week</span>
-          <b>{fmt(week)}</b>
-          <small>views across all content</small>
-        </div>
-        <div className="perf-stat">
           <span>Unique visitors</span>
-          <b>{fmt(data.uniqueVisitorsWeek)}</b>
-          <small>last 7 days</small>
+          <b>{fmt(uniques)}</b>
+          <small>{data.rangeLabel}</small>
         </div>
         <div className="perf-stat">
           <span>Published</span>
@@ -266,10 +268,10 @@ export default function PerformanceDashboard({ data }: { data: Overview }) {
       <div className="perf-grid">
         <div className="perf-panel perf-panel--wide">
           <div className="perf-panel-head">
-            <h3>Traffic</h3>
+            <h3>Traffic · {data.rangeLabel}</h3>
             <span className="perf-hint">Hover any point for exact views</span>
           </div>
-          <AreaChart points={points} />
+          <AreaChart points={data.series} rangeLabel={data.rangeLabel} />
         </div>
 
         <div className="perf-panel">
