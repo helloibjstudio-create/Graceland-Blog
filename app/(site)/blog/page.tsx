@@ -23,7 +23,7 @@ export default async function BlogPage() {
   return (
     <>
       <section className="hero">
-        <Media className="hero-bg" src="/images/hero-brain.jpg" data-parallax="0.22" />
+        <Media className="hero-bg" src="/images/brain%20image.png" data-parallax="0.22" />
         <NeuralField />
         <div className="wrap">
           <h1>Blogs</h1>
