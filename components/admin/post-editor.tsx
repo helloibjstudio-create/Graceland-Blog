@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import { savePostAction, suggestPostMetadata, type ActionState } from "@/app/admin/actions";
 import { TAG_VARIANTS, TOPIC_FILTERS, slugify } from "@/lib/posts";
 import type { Post } from "@/lib/types";
+import Autosave from "./autosave";
 import CopyButton from "./copy-button";
 import ImageUpload from "./image-upload";
+import PostedToast from "./posted-toast";
 import RichTextEditor from "./rich-text-editor";
 
 const INITIAL: ActionState = {};
@@ -24,6 +26,7 @@ export default function PostEditor({
   hasCodedBody?: boolean;
 }) {
   const [state, action, pending] = useActionState(savePostAction, INITIAL);
+  const formRef = useRef<HTMLFormElement>(null);
   const [aiPending, startAi] = useTransition();
 
   const [title, setTitle] = useState(post?.title ?? "");
@@ -36,6 +39,14 @@ export default function PostEditor({
   const [aiError, setAiError] = useState("");
 
   const effectiveSlug = slugTouched ? slug : slugify(title);
+
+  const publishNow = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const form = e.currentTarget.form;
+    if (!form) return;
+    const statusEl = form.querySelector<HTMLSelectElement>('select[name="status"]');
+    if (statusEl) statusEl.value = "published";
+    form.requestSubmit();
+  };
 
   const handleSuggest = () => {
     setAiError("");
@@ -55,8 +66,9 @@ export default function PostEditor({
   };
 
   return (
-    <form action={action}>
-      <input type="hidden" name="id" value={post?.id ?? ""} />
+    <form action={action} ref={formRef}>
+      <Autosave formRef={formRef} endpoint="/api/autosave-post" redirectBase="/admin/posts" />
+      <input type="hidden" name="id" defaultValue={post?.id ?? ""} />
 
       <div className="admin-topbar">
         <div>
@@ -69,13 +81,22 @@ export default function PostEditor({
         </div>
         <div className="admin-actions">
           <Link className="btn btn-quiet btn-sm" href="/admin/posts">Back to posts</Link>
-          <button className="btn btn-primary btn-sm" type="submit" disabled={pending}>
-            {pending ? "Saving…" : "Save post"}
+          <button className="btn btn-quiet btn-sm" type="submit" disabled={pending}>
+            {pending ? "Saving…" : "Save"}
+          </button>
+          <button
+            className="btn btn-primary btn-sm"
+            type="button"
+            onClick={publishNow}
+            disabled={pending}
+            title="Set status to published and save"
+          >
+            {post?.status === "published" ? "Update live post" : "Publish now"}
           </button>
         </div>
       </div>
 
-      {saved && <div className="alert alert-ok">Saved.</div>}
+      <PostedToast show={Boolean(saved)} label={post?.status === "published" ? "Published!" : "Saved!"} />
       {state.error && <div className="alert alert-error">{state.error}</div>}
 
       <div className="editor-grid">
@@ -132,9 +153,19 @@ export default function PostEditor({
 
           <div className="form-foot">
             <span className="admin-sub">{post ? `ID ${post.id}` : "New ID on save."}</span>
-            <button className="btn btn-primary" type="submit" disabled={pending}>
-              {pending ? "Saving…" : "Save post"}
-            </button>
+            <div className="admin-actions">
+              <button className="btn btn-quiet" type="submit" disabled={pending}>
+                {pending ? "Saving…" : "Save"}
+              </button>
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={publishNow}
+                disabled={pending}
+              >
+                {post?.status === "published" ? "Update live post" : "Publish now"}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -237,8 +268,17 @@ export default function PostEditor({
 
               <div className="field">
                 <label htmlFor="episodeUrl">Companion episode link</label>
-                <input id="episodeUrl" name="episodeUrl" defaultValue={post?.episodeUrl ?? ""} placeholder="/podcast" />
-                <span className="hint">Adds the "Listen to the Episode" button.</span>
+                <input
+                  id="episodeUrl"
+                  name="episodeUrl"
+                  type="text"
+                  defaultValue={post?.episodeUrl ?? ""}
+                  placeholder="https://youtube.com/watch?v=… or /podcast/episode-slug"
+                  inputMode="url"
+                />
+                <span className="hint">
+                  Paste a full URL (YouTube, Spotify, Apple Podcasts) or a site path like <code>/podcast/episode-slug</code>. Adds the &ldquo;Listen to the Episode&rdquo; button.
+                </span>
               </div>
             </div>
           </div>

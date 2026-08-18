@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import { saveEpisodeAction, suggestEpisodeMetadata, type ActionState } from "@/app/admin/actions";
 import { TAG_VARIANTS } from "@/lib/posts";
 import type { Episode } from "@/lib/types";
+import Autosave from "./autosave";
 import ImageUpload from "./image-upload";
+import PostedToast from "./posted-toast";
 
 const INITIAL: ActionState = {};
 
@@ -18,6 +20,56 @@ export default function EpisodeEditor({
 }) {
   const [state, action, pending] = useActionState(saveEpisodeAction, INITIAL);
   const [aiPending, startAi] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const [image, setImage] = useState(episode?.image ?? "");
+  const [thumbStatus, setThumbStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [thumbError, setThumbError] = useState("");
+
+  const pullThumbnail = async (silent = false) => {
+    const url = formRef.current?.querySelector<HTMLInputElement>('input[name="youtubeUrl"]')?.value?.trim();
+    if (!url) {
+      if (!silent) {
+        setThumbStatus("error");
+        setThumbError("Add a video URL first.");
+      }
+      return;
+    }
+    setThumbStatus("loading");
+    setThumbError("");
+    try {
+      const res = await fetch(`/api/video-thumbnail?url=${encodeURIComponent(url)}`);
+      const json = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !json.url) throw new Error(json.error ?? "No thumbnail found");
+      setImage(json.url);
+      setThumbStatus("idle");
+    } catch (err) {
+      if (silent) {
+        setThumbStatus("idle");
+      } else {
+        setThumbStatus("error");
+        setThumbError((err as Error).message);
+      }
+    }
+  };
+
+  const debounceRef = useRef<number | null>(null);
+  const onVideoUrlChange = () => {
+    if (image) return; // don't override an image the user already picked
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => pullThumbnail(true), 700);
+  };
+  const onVideoUrlBlur = () => {
+    if (!image) pullThumbnail(true);
+  };
+
+  const publishNow = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const form = e.currentTarget.form;
+    if (!form) return;
+    const statusEl = form.querySelector<HTMLSelectElement>('select[name="status"]');
+    if (statusEl) statusEl.value = "published";
+    form.requestSubmit();
+  };
 
   const [title, setTitle] = useState(episode?.title ?? "");
   const [tag, setTag] = useState(episode?.tag ?? "Mental Health 101");
@@ -40,8 +92,9 @@ export default function EpisodeEditor({
   };
 
   return (
-    <form action={action}>
-      <input type="hidden" name="id" value={episode?.id ?? ""} />
+    <form action={action} ref={formRef}>
+      <Autosave formRef={formRef} endpoint="/api/autosave-episode" redirectBase="/admin/episodes" />
+      <input type="hidden" name="id" defaultValue={episode?.id ?? ""} />
 
       <div className="admin-topbar">
         <div>
@@ -54,13 +107,22 @@ export default function EpisodeEditor({
         </div>
         <div className="admin-actions">
           <Link className="btn btn-quiet btn-sm" href="/admin/episodes">Back to episodes</Link>
-          <button className="btn btn-primary btn-sm" type="submit" disabled={pending}>
-            {pending ? "Saving…" : "Save episode"}
+          <button className="btn btn-quiet btn-sm" type="submit" disabled={pending}>
+            {pending ? "Saving…" : "Save"}
+          </button>
+          <button
+            className="btn btn-primary btn-sm"
+            type="button"
+            onClick={publishNow}
+            disabled={pending}
+            title="Set status to published and save"
+          >
+            {episode?.status === "published" ? "Update live episode" : "Publish now"}
           </button>
         </div>
       </div>
 
-      {saved && <div className="alert alert-ok">Saved.</div>}
+      <PostedToast show={Boolean(saved)} label={episode?.status === "published" ? "Published!" : "Saved!"} />
       {state.error && <div className="alert alert-error">{state.error}</div>}
 
       <div className="editor-grid">
@@ -97,8 +159,29 @@ export default function EpisodeEditor({
 
             <div className="form-row">
               <div className="field">
-                <label htmlFor="youtubeUrl">YouTube URL</label>
-                <input id="youtubeUrl" name="youtubeUrl" defaultValue={episode?.youtubeUrl ?? ""} />
+                <label htmlFor="youtubeUrl">Video URL</label>
+                <div className="field-inline">
+                  <input
+                    id="youtubeUrl"
+                    name="youtubeUrl"
+                    defaultValue={episode?.youtubeUrl ?? ""}
+                    placeholder="YouTube, Vimeo, or any page with a video"
+                    onChange={onVideoUrlChange}
+                    onBlur={onVideoUrlBlur}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-quiet btn-sm"
+                    onClick={() => pullThumbnail(false)}
+                    disabled={thumbStatus === "loading"}
+                    title="Fetch the thumbnail from the video URL"
+                  >
+                    {thumbStatus === "loading" ? "Fetching…" : "Pull thumbnail"}
+                  </button>
+                </div>
+                {thumbStatus === "error" && (
+                  <span className="hint" style={{ color: "#c33" }}>{thumbError}</span>
+                )}
               </div>
               <div className="field">
                 <label htmlFor="listenUrl">Audio URL</label>
@@ -115,9 +198,19 @@ export default function EpisodeEditor({
 
           <div className="form-foot">
             <span className="admin-sub">{episode ? `ID ${episode.id}` : "New ID on save."}</span>
-            <button className="btn btn-primary" type="submit" disabled={pending}>
-              {pending ? "Saving…" : "Save episode"}
-            </button>
+            <div className="admin-actions">
+              <button className="btn btn-quiet" type="submit" disabled={pending}>
+                {pending ? "Saving…" : "Save"}
+              </button>
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={publishNow}
+                disabled={pending}
+              >
+                {episode?.status === "published" ? "Update live episode" : "Publish now"}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -178,7 +271,12 @@ export default function EpisodeEditor({
                 </select>
               </div>
 
-              <ImageUpload name="image" defaultValue={episode?.image ?? ""} label="Thumbnail" />
+              <ImageUpload
+                name="image"
+                label="Thumbnail"
+                value={image}
+                onValueChange={setImage}
+              />
 
               <div className="field">
                 <label htmlFor="gradient">Fallback gradient</label>

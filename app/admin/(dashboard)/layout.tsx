@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   return (
     <div className="admin-shell">
       <aside className="admin-side">
-        <Link className="brand" href="/admin">
+        <Link className="brand admin-side-brand" href="/admin">
           <Image
             src="/images/graceland-logo.svg"
             alt="Graceland Psychiatry & TMS Center"
@@ -23,7 +23,6 @@ export default async function DashboardLayout({
             height={34}
             className="site-logo site-logo--white"
           />
-          <span className="brand-sub" style={{ color: "rgba(255,255,255,.6)", fontSize: ".65rem", marginTop: 2 }}>Content Studio</span>
         </Link>
 
         <div>

@@ -2,6 +2,35 @@ import type { Episode } from "./types";
 
 export type { Episode } from "./types";
 
+/**
+ * Returns a usable thumbnail URL for an episode. Falls back to deriving one
+ * from the YouTube video URL when the editor didn't set an explicit image —
+ * so freshly-published episodes never render as a blank gradient.
+ */
+export function episodeThumbnail(ep: Pick<Episode, "image" | "youtubeUrl">): string | undefined {
+  if (ep.image) return ep.image;
+  const id = youtubeVideoId(ep.youtubeUrl);
+  return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : undefined;
+}
+
+export function youtubeVideoId(url?: string | null): string | null {
+  if (!url) return null;
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return null;
+  }
+  const host = u.hostname.replace(/^www\./, "");
+  if (host === "youtu.be") return u.pathname.split("/").filter(Boolean)[0] ?? null;
+  if (!host.endsWith("youtube.com") && host !== "youtube-nocookie.com") return null;
+  const v = u.searchParams.get("v");
+  if (v) return v;
+  const parts = u.pathname.split("/").filter(Boolean);
+  if (["embed", "shorts", "live", "v"].includes(parts[0] ?? "")) return parts[1] ?? null;
+  return null;
+}
+
 export const PLATFORMS = [
   { name: "Spotify", action: "Listen Free →", color: "#1DB954", href: "#" },
   { name: "Apple Podcasts", action: "Subscribe →", color: "#9B59D0", href: "#" },

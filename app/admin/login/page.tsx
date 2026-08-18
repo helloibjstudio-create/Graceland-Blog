@@ -19,7 +19,6 @@ export default async function LoginPage() {
             height={38}
             className="site-logo"
           />
-          <span className="brand-sub" style={{ marginTop: 4 }}>Content Studio</span>
         </div>
 
         <h1>Sign in</h1>

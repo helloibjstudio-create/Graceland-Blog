@@ -5,11 +5,12 @@ import Media from "@/components/media";
 import NewsletterForm from "@/components/newsletter-form";
 import { MailIcon, PlayIcon } from "@/components/icons";
 import { tagClass } from "@/components/post-card";
-import { PLATFORMS } from "@/lib/episodes";
+import { PLATFORMS, episodeThumbnail } from "@/lib/episodes";
 import { getEpisodes } from "@/lib/store";
 import { DISCUSSION_TOPICS } from "@/lib/site";
 import { formatDate } from "@/lib/posts";
 import PlatformIcon from "@/components/platform-icon";
+import TrackedLink from "@/components/tracked-link";
 
 /** Static by default; re-checks the content store at most once a minute.
  *  CMS saves also call revalidatePath, so editor changes appear immediately. */
@@ -84,9 +85,9 @@ export default async function PodcastPage() {
           <span>Latest Episode</span>
         </div>
         <div className="latest-episode" style={{ marginTop: 22 }}>
-          <a href={latest.youtubeUrl} aria-label={latest.title}>
-            <Media src={latest.image} gradient={latest.gradient} />
-          </a>
+          <TrackedLink kind="episode" slug={latest.slug} href={latest.youtubeUrl} aria-label={latest.title}>
+            <Media src={episodeThumbnail(latest)} gradient={latest.gradient} />
+          </TrackedLink>
           <div>
             <span className={tagClass(latest.variant)}>{latest.tag}</span>
             <h2 style={{ marginTop: 12 }}>{latest.title}</h2>
@@ -102,14 +103,14 @@ export default async function PodcastPage() {
               </div>
             )}
             <div className="ep-actions">
-              <a className="btn btn-primary" href={latest.youtubeUrl}>
+              <TrackedLink kind="episode" slug={latest.slug} className="btn btn-primary" href={latest.youtubeUrl}>
                 <PlayIcon />
                 Watch Now
-              </a>
+              </TrackedLink>
               {latest.listenUrl && (
-                <a className="btn btn-outline" href={latest.listenUrl}>
+                <TrackedLink kind="episode" slug={latest.slug} className="btn btn-outline" href={latest.listenUrl}>
                   🎧 Listen
-                </a>
+                </TrackedLink>
               )}
             </div>
           </div>
@@ -136,25 +137,50 @@ export default async function PodcastPage() {
         <div className="ep-grid">
           {episodes.map((ep) => (
             <article className="ep-card" key={ep.slug}>
-              <a href={ep.youtubeUrl} aria-label={ep.title}>
-                <Media src={ep.image} gradient={ep.gradient} />
-              </a>
+              <TrackedLink
+                kind="episode"
+                slug={ep.slug}
+                href={ep.youtubeUrl}
+                aria-label={`Watch ${ep.title} on YouTube`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Media src={episodeThumbnail(ep)} gradient={ep.gradient} />
+              </TrackedLink>
               <div className="ep-body">
                 <div className="ep-head">
                   <span className={tagClass(ep.variant)}>{ep.tag}</span>
                   <time dateTime={ep.date}>{formatDate(ep.date)}</time>
                 </div>
                 <h3>
-                  {ep.articleHref ? (
-                    <Link href={ep.articleHref}>{ep.title}</Link>
-                  ) : (
-                    <a href={ep.youtubeUrl}>{ep.title}</a>
-                  )}
+                  <TrackedLink
+                    kind="episode"
+                    slug={ep.slug}
+                    href={ep.youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {ep.title}
+                  </TrackedLink>
                 </h3>
                 <p>{ep.summary}</p>
-                <a className="watch-link" href={ep.youtubeUrl}>
-                  ▶ Watch on YouTube
-                </a>
+                <div className="ep-card-actions">
+                  <TrackedLink
+                    kind="episode"
+                    slug={ep.slug}
+                    className="watch-link"
+                    href={ep.youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    ▶ Watch on YouTube
+                  </TrackedLink>
+                  {ep.articleHref && (
+                    <Link className="watch-link watch-link--article" href={ep.articleHref}>
+                      Read Article →
+                    </Link>
+                  )}
+                </div>
               </div>
             </article>
           ))}
@@ -173,27 +199,25 @@ export default async function PodcastPage() {
       </section>
 
       {/* ---------- Meet the host ---------- */}
-      <section className="host-band">
-        <div className="wrap-wide">
-          <div className="host-inner">
-            <Media
-              src="/images/dr-popoola-portrait.png"
-              alt="Dr. Femi Popoola"
-              gradient="linear-gradient(160deg,#17506B,#0A2A3C)"
-            />
-            <div className="host-copy">
-              <h2>Meet Dr. Femi Popoola</h2>
-              <p>
-                Dr. Femi Popoola is a board-certified general psychiatrist and child and adolescent
-                psychiatrist. He is the founder of Graceland Psychiatry and TMS Center, with clinics
-                in San Antonio, Texas; New Braunfels, Texas; and Columbia, Missouri. He earned his
-                medical degree from the University of Ilorin in Nigeria and completed psychiatry
-                residency at the University of Missouri (Mizzou). He served four years on active
-                duty in the United States Navy, including service aboard the USS Gravely. He is also
-                the founder of Mastermind Recovery, pastor of New Testament Christian Mission San
-                Antonio, and host of the Mental Health Insights podcast.
-              </p>
-            </div>
+      <section className="host-band wrap section">
+        <div className="host-inner">
+          <Media
+            src="/images/ImageWithFallback dr femi image.png"
+            alt="Dr. Femi Popoola"
+            gradient="linear-gradient(160deg,#17506B,#0A2A3C)"
+          />
+          <div className="host-copy">
+            <h2>Meet Dr. Femi Popoola</h2>
+            <p>
+              Dr. Femi Popoola is a board-certified general psychiatrist and child and adolescent
+              psychiatrist. He is the founder of Graceland Psychiatry and TMS Center, with clinics
+              in San Antonio, Texas; New Braunfels, Texas; and Columbia, Missouri. He earned his
+              medical degree from the University of Ilorin in Nigeria and completed psychiatry
+              residency at the University of Missouri (Mizzou). He served four years on active
+              duty in the United States Navy, including service aboard the USS Gravely. He is also
+              the founder of Mastermind Recovery, pastor of New Testament Christian Mission San
+              Antonio, and host of the Mental Health Insights podcast.
+            </p>
           </div>
         </div>
       </section>

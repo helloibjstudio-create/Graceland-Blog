@@ -18,11 +18,11 @@ export default function SiteFooter() {
           <div className="footer-brand">
             <Link className="brand" href="/">
               <Image
-                src="/images/graceland-logo.svg"
+                src="/images/graceland-logo-footer.svg"
                 alt="Graceland Psychiatry & TMS Center"
                 width={180}
                 height={38}
-                className="site-logo site-logo--accent"
+                className="site-logo"
               />
             </Link>
             <p className="footer-about">
@@ -86,12 +86,6 @@ export default function SiteFooter() {
               </li>
               <li>
                 <Link href="/our-team">Our Team</Link>
-              </li>
-              <li>
-                <Link href="/blog">Blog</Link>
-              </li>
-              <li>
-                <Link href="/podcast">Podcast</Link>
               </li>
               <li>
                 <Link href="/privacy">Privacy Policy</Link>

@@ -8,6 +8,7 @@ import Media from "@/components/media";
 import NeuralField from "@/components/neural-field";
 import PostCard from "@/components/post-card";
 import ReadingProgress from "@/components/reading-progress";
+import ViewTracker from "@/components/view-tracker";
 import { ArrowRight, PlayIcon } from "@/components/icons";
 import { ARTICLE_BODIES } from "@/content";
 import { processHtml, renderMarkdown } from "@/lib/markdown";
@@ -63,6 +64,7 @@ export default async function ArticlePage({ params }: Params) {
 
   return (
     <>
+      {post.status === "published" && <ViewTracker kind="post" slug={post.slug} />}
       <ReadingProgress />
 
       <section className="hero article-hero">

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Media from "./media";
 import PostCard, { tagClass } from "./post-card";
 import NewsletterForm from "./newsletter-form";
-import { ArrowLeft, ArrowRight, ChevronDown, ClockIcon, ListIcon, PlayIcon, UserIcon } from "./icons";
+import { ArrowLeft, ArrowRight, ChevronDown, ClockIcon, ListIcon, MailIcon, PlayIcon, SearchIcon, UserIcon } from "./icons";
 import { DISCUSSION_TOPICS } from "@/lib/site";
 import {
   AUTHORS,
@@ -73,18 +73,29 @@ function FilterDropdown({
   );
 }
 
+const PAGE_1_SIZE = 6;
+const PAGE_N_SIZE = 12;
+
 export default function BlogExplorer({ posts }: { posts: Post[] }) {
   const [filters, setFilters] = useState({ date: "all", topic: "all", author: "all" });
   const [openMenu, setOpenMenu] = useState<FilterKey | null>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const filtersRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const close = () => setOpenMenu(null);
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
+    const onDocClick = (e: MouseEvent) => {
+      if (filtersRef.current && !filtersRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
   }, []);
 
-  const filtering = Object.values(filters).some((v) => v !== "all");
+  const q = query.trim().toLowerCase();
+  const searching = q.length > 0;
+  const filtering = searching || Object.values(filters).some((v) => v !== "all");
 
   const visible = useMemo(() => {
     return posts.filter((post) => {
@@ -95,17 +106,34 @@ export default function BlogExplorer({ posts }: { posts: Post[] }) {
         const age = (NOW - Date.parse(`${post.date}T00:00:00Z`)) / 86_400_000;
         if (age > days) return false;
       }
+      if (q) {
+        const hay = `${post.title} ${post.excerpt} ${post.tag} ${post.topic}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
-  }, [posts, filters]);
+  }, [posts, filters, q]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters, q]);
 
   const featured = posts.find((p) => p.featured) ?? posts[0];
   const rest = posts.filter((p) => p.id !== featured?.id);
   const sideCards = rest.slice(0, 2);
-  // The featured post owns the top slot, so keep it out of the grid below.
-  const listed = filtering ? visible : visible.filter((p) => p.id !== featured?.id);
-  const firstRow = listed.slice(0, 3);
-  const secondRow = listed.slice(3);
+  // The featured post owns the top slot on page 1, so keep it out of the grid below.
+  const pool = filtering ? visible : visible.filter((p) => p.id !== featured?.id);
+
+  // Page 1 shows 6 cards; subsequent pages show 12.
+  const totalPages = pool.length <= PAGE_1_SIZE
+    ? 1
+    : 1 + Math.ceil((pool.length - PAGE_1_SIZE) / PAGE_N_SIZE);
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = currentPage === 1 ? 0 : PAGE_1_SIZE + (currentPage - 2) * PAGE_N_SIZE;
+  const pageEnd = currentPage === 1 ? PAGE_1_SIZE : pageStart + PAGE_N_SIZE;
+  const listed = pool.slice(pageStart, pageEnd);
+  const firstRow = currentPage === 1 ? listed.slice(0, 3) : listed;
+  const secondRow = currentPage === 1 ? listed.slice(3) : [];
 
   function set(key: FilterKey, value: string) {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -115,10 +143,20 @@ export default function BlogExplorer({ posts }: { posts: Post[] }) {
   const featuredAuthor = featured ? AUTHORS[featured.author] : null;
 
   return (
-    <div ref={rootRef}>
+    <div>
       {/* ---------- Filters ---------- */}
       <div className="wrap">
-        <div className="filters">
+        <div className="filters" ref={filtersRef}>
+          <div className="filter-search">
+            <SearchIcon />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search articles…"
+              aria-label="Search articles"
+            />
+          </div>
           <FilterDropdown
             label="Posted at"
             icon={<ClockIcon />}
@@ -150,7 +188,10 @@ export default function BlogExplorer({ posts }: { posts: Post[] }) {
             <button
               type="button"
               className="filter-btn"
-              onClick={() => setFilters({ date: "all", topic: "all", author: "all" })}
+              onClick={() => {
+                setFilters({ date: "all", topic: "all", author: "all" });
+                setQuery("");
+              }}
             >
               Clear filters ✕
             </button>
@@ -163,6 +204,10 @@ export default function BlogExplorer({ posts }: { posts: Post[] }) {
         <section className="wrap">
           <div className="feature-row">
             <article className="feature-card">
+              {featured.image && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="feature-card-bg" src={featured.image} alt="" aria-hidden="true" />
+              )}
               <div className="feature-pills">
                 <span className="tag tag-new">NEW</span>
                 <span className="tag tag-glass">{featured.tag}</span>
@@ -240,7 +285,10 @@ export default function BlogExplorer({ posts }: { posts: Post[] }) {
 
         <div className="newsletter">
           <div>
-            <span className="tag">✉ Newsletter</span>
+            <span className="newsletter-badge">
+              <MailIcon width={16} height={16} />
+              Newsletter
+            </span>
             <h3>Stay ahead in mental health.</h3>
             <p>
               New articles, research updates, and clinical insights delivered to your inbox — no
@@ -271,25 +319,39 @@ export default function BlogExplorer({ posts }: { posts: Post[] }) {
         </div>
 
         {/* ---------- Pagination ---------- */}
-        <nav className="pagination" aria-label="Pagination">
-          <button className="page-nav" type="button" disabled>
-            <ArrowLeft /> Previous
-          </button>
-          <div className="pages">
-            <span className="is-current" aria-current="page">
-              1
-            </span>
-            <Link href="/blog?page=2">2</Link>
-            <Link href="/blog?page=3">3</Link>
-            <span>…</span>
-            <Link href="/blog?page=8">8</Link>
-            <Link href="/blog?page=9">9</Link>
-            <Link href="/blog?page=10">10</Link>
-          </div>
-          <Link className="page-nav" href="/blog?page=2">
-            Next <ArrowRight />
-          </Link>
-        </nav>
+        {totalPages > 1 && (
+          <nav className="pagination" aria-label="Pagination">
+            <button
+              className="page-nav"
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              <ArrowLeft /> Previous
+            </button>
+            <div className="pages">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) =>
+                n === currentPage ? (
+                  <span key={n} className="is-current" aria-current="page">
+                    {n}
+                  </span>
+                ) : (
+                  <button key={n} type="button" onClick={() => setPage(n)}>
+                    {n}
+                  </button>
+                )
+              )}
+            </div>
+            <button
+              className="page-nav"
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next <ArrowRight />
+            </button>
+          </nav>
+        )}
       </section>
     </div>
   );

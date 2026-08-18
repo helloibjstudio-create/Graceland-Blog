@@ -3,17 +3,22 @@ import { getEpisodes, getPosts } from "@/lib/store";
 import { formatDate } from "@/lib/posts";
 import StatusPill from "@/components/admin/status-pill";
 import RowActions from "@/components/admin/row-actions";
+import PerformanceDashboard from "@/components/admin/performance-dashboard";
+import { buildOverview } from "@/lib/analytics";
+
+// Fresh numbers on every visit — no caching so it feels real-time.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AdminOverview() {
   const posts = await getPosts({ includeDrafts: true });
   const episodes = await getEpisodes({ includeDrafts: true });
 
-  const published = posts.filter((p) => p.status === "published").length;
-  const drafts = posts.length - published;
   const recent = posts.slice(0, 6);
   const lastUpdated = [...posts, ...episodes].sort((a, b) =>
     b.updatedAt.localeCompare(a.updatedAt),
   )[0];
+  const overview = await buildOverview(posts, episodes);
 
   return (
     <>
@@ -37,33 +42,7 @@ export default async function AdminOverview() {
         </div>
       </div>
 
-      <div className="admin-cards">
-        <div className="admin-card">
-          <span>Published posts</span>
-          <b>{published}</b>
-          <small>live on /blog</small>
-        </div>
-        <div className="admin-card">
-          <span>Drafts</span>
-          <b>{drafts}</b>
-          <small>visible only via preview links</small>
-        </div>
-        <div className="admin-card">
-          <span>Episodes</span>
-          <b>{episodes.filter((e) => e.status === "published").length}</b>
-          <small>live on /podcast</small>
-        </div>
-        <div className="admin-card">
-          <span>Avg. read time</span>
-          <b>
-            {posts.length
-              ? Math.round(posts.reduce((sum, p) => sum + p.readTime, 0) / posts.length)
-              : 0}
-            <span style={{ fontSize: ".9rem", fontWeight: 600 }}> min</span>
-          </b>
-          <small>across all posts</small>
-        </div>
-      </div>
+      <PerformanceDashboard data={overview} />
 
       <div className="panel">
         <div className="panel-head">

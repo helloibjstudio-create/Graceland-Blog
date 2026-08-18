@@ -64,6 +64,15 @@ export function ListIcon(props: Icon) {
   );
 }
 
+export function SearchIcon(props: Icon) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="2" />
+      <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function UserIcon(props: Icon) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>

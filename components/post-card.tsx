@@ -16,7 +16,7 @@ export default function PostCard({ post, compact = false }: { post: Post; compac
       data-topic={post.topic}
       data-author={post.author}
     >
-      <Link href={`/blog/${post.slug}`} aria-label={post.title}>
+      <Link className="post-card-cover" href={`/blog/${post.slug}`} aria-label={post.title}>
         <Media src={post.image} />
       </Link>
       <div className="post-body">

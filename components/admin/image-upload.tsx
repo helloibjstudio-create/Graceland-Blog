@@ -1,19 +1,39 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   name: string;
   defaultValue?: string;
   label?: string;
+  /** Controlled value — when passed, the parent owns the state. */
+  value?: string;
+  onValueChange?: (url: string) => void;
 };
 
-export default function ImageUpload({ name, defaultValue = "", label = "Cover image" }: Props) {
+export default function ImageUpload({
+  name,
+  defaultValue = "",
+  label = "Cover image",
+  value,
+  onValueChange,
+}: Props) {
   const [tab, setTab] = useState<"url" | "upload">("url");
-  const [url, setUrl] = useState(defaultValue);
+  const [internalUrl, setInternalUrl] = useState(defaultValue);
+  const url = value ?? internalUrl;
+  const setUrl = (next: string) => {
+    if (value === undefined) setInternalUrl(next);
+    onValueChange?.(next);
+  };
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Keep the internal state in sync when the parent updates the controlled value
+  // (e.g. after a "Pull thumbnail" click).
+  useEffect(() => {
+    if (value !== undefined) setInternalUrl(value);
+  }, [value]);
 
   const upload = async (file: File) => {
     setError("");

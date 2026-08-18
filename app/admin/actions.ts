@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { draftMode } from "next/headers";
 import { redirect } from "next/navigation";
 import { checkCredentials, endSession, requireSession, startSession } from "@/lib/auth";
 import { estimateReadTime } from "@/lib/markdown";
@@ -99,6 +100,7 @@ export async function savePostAction(_prev: ActionState, formData: FormData): Pr
   if (post.featured) await clearFeaturedPosts(post.id);
   await upsertPost(post);
 
+  if (post.status === "draft") (await draftMode()).disable();
   revalidateBlog(post.slug);
   if (existing && existing.slug !== post.slug) revalidatePath(`/blog/${existing.slug}`);
 
@@ -115,6 +117,9 @@ export async function togglePostStatusAction(formData: FormData) {
     status: post.status === "published" ? "draft" : "published",
   };
   await upsertPost(next);
+  // If we just unpublished, drop the preview cookie so the admin sees the
+  // reader's view immediately — otherwise the draft would keep appearing.
+  if (next.status === "draft") (await draftMode()).disable();
   revalidateBlog(post.slug);
   revalidatePath("/admin");
   revalidatePath("/admin/posts");
@@ -172,6 +177,7 @@ export async function saveEpisodeAction(
   };
 
   await upsertEpisode(episode);
+  if (episode.status === "draft") (await draftMode()).disable();
   revalidatePath("/podcast");
   redirect(`/admin/episodes/${episode.id}?saved=1`);
 }
@@ -181,10 +187,12 @@ export async function toggleEpisodeStatusAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const episode = await getEpisodeById(id);
   if (!episode) return;
+  const nextStatus = episode.status === "published" ? "draft" : "published";
   await upsertEpisode({
     ...episode,
-    status: episode.status === "published" ? "draft" : "published",
+    status: nextStatus,
   });
+  if (nextStatus === "draft") (await draftMode()).disable();
   revalidatePath("/podcast");
   revalidatePath("/admin/episodes");
   revalidatePath("/admin");
