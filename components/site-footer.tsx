@@ -26,8 +26,8 @@ export default function SiteFooter() {
               />
             </Link>
             <p className="footer-about">
-              Evidence-based treatment for depression, anxiety, ADHD, OCD, PTSD and
-              treatment-resistant conditions.
+              Evidence-based treatment for depression, anxiety, ADHD, OCD, PTSD, Addiction,
+              Schizophrenia and other mental health conditions.
             </p>
             <div className="socials">
               <a href="#" aria-label="Instagram">
